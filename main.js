@@ -30,10 +30,12 @@ global.nextDj = null;
 global.nextDjTime = null;
 global.refreshInvalidId = null;
 
+// Fields for the bot
 global.botVoted = false;
 global.botOnTable = false;
 
-global.iPhoneUserList = [ ];
+// Listener cache
+global.listeners = {length: 0};
 
 Log("Done");
 
