@@ -37,8 +37,9 @@ global.OnRoomChanged = function(data){
 global.OnRegistered = function(data){
 	Log("Registered");
 
-	/* Add to iPhone if iPhone User */
-	if (data.user[0].laptop == "iphone"){ iPhoneUserList.push(data.user[0].userid); }
+	/* Add to the cached user list */
+	mUsers[pData.userid] = BaseUser().extend(pData);
+	++mUsers.length;
 
 	/* Give new users a welcome message */
 	var text = msgWelcome.replace(/\{username\}/gi,data.user[0].name);
@@ -51,8 +52,10 @@ global.OnRegistered = function(data){
 global.OnDeregistered = function(data){
 	Log("Deregistered");
 
-	/* Remove the user from the iPhone list if iPhone User */
-	if (data.user[0].laptop == "iphone"){ delete iPhoneUserList[data.user[0].userid]; }
+	/* Remove the user from the cache */
+	for(var i = 0, len = pData.user.length; i < len; ++i) { 
+		mUsers[pData.user[i].userid].Remove();
+	}
 
 	/* Remove the user from the Queue if they were on it. */
 	RemoveFromQueue(data.user[0].name);
