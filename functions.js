@@ -91,7 +91,7 @@ global.OnRemDJ = function(data){
 	Log("Remove DJ");
 
 	/* Remove thier DJ count*/
-	delete djCount[data.user[0].userid];
+	delete djPlayCount[data.user[0].userid];
 
 	/* Update the DJ list */
 	UpdateDjs();
@@ -452,9 +452,9 @@ global.QueueStatus = function(){
 /* CheckIfDjShouldBeRemoved */
 /* ============== */
 global.CheckIfDjShouldBeRemoved = function(userid){
-	if (djCount[dj] >= djMaxPlays && djMaxPlays !== 0) {
+	if (djPlayCount[dj] >= djMaxPlays && djMaxPlays !== 0) {
 		bot.remDj(dj);
-		delete djCount[dj];
+		delete djPlayCount[dj];
 		Speak(msgLastSong.replace(/\{username\}/gi, data.room.metadata.current_song.djname));
     }
 };
@@ -465,8 +465,8 @@ global.CheckIfDjShouldBeRemoved = function(userid){
 global.SpeakPlayCount = function(){
 	var playCount = "";
 	for (var i = 0; i < djs.length; i++) {
-		if (djCount[djs[i]] !== undefined) {
-			playCount += djCount[djs[i]];
+		if (djPlayCount[djs[i]] !== undefined) {
+			playCount += djPlayCount[djs[i]];
 		}
 	}
 	Speak(msgPlayCount.replace(/\{playcount\}/gi, playCount));
