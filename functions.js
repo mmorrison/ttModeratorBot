@@ -599,3 +599,55 @@ global.Pause = function(ms) {
   ms += new Date().getTime();
   while (new Date() < ms) {}
 };
+
+/* ============== */
+/* BaseUser - The base user object for tracking the users. */
+/* ============== */
+BaseUser = function(){return {
+	userid: -1,
+	name: "I said what what",
+	isBanned: false,
+	isMod: false,
+	isOwner: false
+	isDJ: false,
+	laptop: "pc",
+	afkWarned: false,
+	afkTime: Date.now(),
+	songCount: 0,
+	totalSongCount: 0,
+	bootAfterSong: false,
+	joinedTime: Date.now(),
+	Boot: function(pReason){ mBot.bootUser(this.userid, pReason ? pReason : ""); },
+	IsiOS: function(){ return this.laptop === "iphone"; },
+	IsBot: function(){ return this.userid == mUserId; },
+	RemoveDJ: function(){
+	    if(!mIsModerator || !this.isDJ || this.IsBot()) return;
+	    mJustRemovedDJ.push(this.userid);
+	    mBot.remDj(this.userid);
+	},
+	Increment_SongCount : function(){
+	  ++this.songCount;
+	  ++this.totalSongCount;
+	  Log(this.name + "'s song count: " + this.songCount + " total of: " + this.totalSongCount);
+	},
+	Remove: function(){
+		//delete mUsers[this.userid];
+		var sUserId = this.userid;
+		mRecentlyLeft[sUserId] = setTimeout(function(){
+			if(!mRecentlyLeft[sUserId]) return;
+			delete mUsers[sUserId];
+			delete mRecentlyLeft[sUserId];
+		}, mTimeForCacheFlush);
+		this.Save();///Save(mRoomShortcut, this);
+	},
+	Initialize: function(){
+		this.songCount = 0;
+		this.afkTime = Date.now();
+		this.afkWarned = false;
+		this.bootAfterSong = false;
+		this.isDJ = mDJs.indexOf(this.userid) != -1;
+		this.isMod = mModerators.indexOf(this.userid) != -1;
+		this.isOwner = mOwners.indexOf(this.userid) != -1;
+		this.joinedTime = Date.now();
+	}
+};
