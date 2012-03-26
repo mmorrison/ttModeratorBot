@@ -3,7 +3,7 @@
 global.Functions = require("./functions.js");
 global.TTAPI = require("ttapi");
 
-if (useDb) {
+if (useDB) {
 	global.Db = require("mysql");
 
 	try {
