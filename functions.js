@@ -490,13 +490,13 @@ global.CheckAutoDj = function(){
 	if (useAutoDj){
 		bot.roomInfo(function(data) {
 			if (data.room.metadata.djcount <= (data.room.metadata.max_djs - 2)) {
-				if (!djing) {
+				if (!botOnTable) {
 					StepUp();
 				}
 			}
 
 			if (data.room.metadata.djcount == data.room.metadata.max_djs) {
-				if (djing) {
+				if (botOnTable) {
 					StepDown();
 				}
 			}
