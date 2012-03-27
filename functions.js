@@ -38,8 +38,8 @@ global.OnRegistered = function(data) {
 	Log("Registered");
 
 	/* Add to the cached user list */
-	mUsers[pData.userid] = BaseUser().extend(pData);
-	++mUsers.length;
+	listeners[pData.userid] = BaseUser().extend(pData);
+	++listeners.length;
 
 	/* Give new users a welcome message */
 	var text = msgWelcome.replace(/\{username\}/gi, data.user[0].name);
@@ -54,7 +54,7 @@ global.OnDeregistered = function(data) {
 
 	/* Remove the user from the cache */
 	for (var i = 0, len = pData.user.length; i < len; ++i) {
-		mUsers[pData.user[i].userid].Remove();
+		listeners[pData.user[i].userid].Remove();
 	}
 
 	/* Remove the user from the Queue if they were on it. */
@@ -652,11 +652,11 @@ BaseUser = function() {
 			Log(this.name + "'s song count: " + this.songCount + " total of: " + this.totalSongCount);
 		},
 		Remove: function() {
-			//delete mUsers[this.userid];
+			//delete listeners[this.userid];
 			var sUserId = this.userid;
 			mRecentlyLeft[sUserId] = setTimeout(function() {
 				if (!mRecentlyLeft[sUserId]) return;
-				delete mUsers[sUserId];
+				delete listeners[sUserId];
 				delete mRecentlyLeft[sUserId];
 			}, mTimeForCacheFlush);
 			this.Save(); ///Save(mRoomShortcut, this);
