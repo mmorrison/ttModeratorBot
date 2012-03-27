@@ -33,6 +33,7 @@ global.refreshInvalidId = null;
 // Fields for the bot
 global.botVoted = false;
 global.botOnTable = false;
+global.botIsPlayingSong = false;
 
 // Listener cache
 global.listeners = {length: 0};
