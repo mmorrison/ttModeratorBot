@@ -15,13 +15,14 @@ global.Log = function(data) {
 global.OnRoomChanged = function(data) {
 	Log("Room Changed");
 
-	/* Load up the initial list of DJs. */
-	djs = data.room.metadata.djs;
-
-	/* Set the initial play count to 0. */
-	Log("Setting play count.");
-	for (var i = 0; i < djs.length; i++) {
-		djPlayCount[djs[i]] = 0;
+	if(data.room.users.length === 0) return;
+	for(var i = 0; i < data.room.users.length; ++i){
+		/* Add to the cached user list */
+		listeners[data.room.users[i].userid] = BaseUser().extend(data.room.users[i]);
+		++listeners.length;
+		/* Give new users a welcome message */
+		var text = msgWelcome.replace(/\{username\}/gi, data.room.users[i].name);
+		TellUser(text, data.room.users[i].userid);
 	}
 
 	/* Check if the queue should be enabled. */
@@ -37,13 +38,15 @@ global.OnRoomChanged = function(data) {
 global.OnRegistered = function(data) {
 	Log("Registered");
 
-	/* Add to the cached user list */
-	listeners[data.userid] = BaseUser().extend(data);
-	++listeners.length;
-
-	/* Give new users a welcome message */
-	var text = msgWelcome.replace(/\{username\}/gi, data.user[0].name);
-	TellUser(text, data.user[0].userid);
+	if(data.user.length === 0) return;
+	for(var i = 0; i < data.user.length; ++i){
+		/* Add to the cached user list */
+		listeners[data.user[i].userid] = BaseUser().extend(data.user[i]);
+		++listeners.length;
+		/* Give new users a welcome message */
+		var text = msgWelcome.replace(/\{username\}/gi, data.user[i].name);
+		TellUser(text, data.user[i].userid);
+	}
 };
 
 /* ============== */
@@ -326,6 +329,17 @@ global.Command = function(source, data) {
 		else {
 			Speak("Unknown Command");
 		}
+	}
+};
+
+global.RegisterUsers = function(pUsers){
+	if(!pUsers || !pUsers.length) return;
+	var sUserIDs = [];
+	for(var i = 0; i < pUsers.length; ++i){
+		var sUser = pUsers[i];
+		mUsers[sUser.userid] = BaseUser().extend(sUser);
+		++mUsers.length;
+		sUserIDs.push(sUser.userid);
 	}
 };
 
