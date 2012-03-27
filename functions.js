@@ -569,7 +569,7 @@ global.IsModerator = function(userid){
 };
 
 /* ============== */
-/* IsDj - Check to see if the user is a moderator */
+/* UpdateDjs - Check to see if the user is a moderator */
 /* ============== */
 global.UpdateDjs = function(){
 	bot.roomInfo(function(data) {
@@ -611,7 +611,7 @@ BaseUser = function(){return {
 	name: "I said what what",
 	isBanned: false,
 	isMod: false,
-	isOwner: false
+	isOwner: false,
 	isDJ: false,
 	laptop: "pc",
 	afkWarned: false,
@@ -624,14 +624,14 @@ BaseUser = function(){return {
 	IsiOS: function(){ return this.laptop === "iphone"; },
 	IsBot: function(){ return this.userid == mUserId; },
 	RemoveDJ: function(){
-	    if(!mIsModerator || !this.isDJ || this.IsBot()) return;
-	    mJustRemovedDJ.push(this.userid);
-	    mBot.remDj(this.userid);
+		if(!mIsModerator || !this.isDJ || this.IsBot()) return;
+		mJustRemovedDJ.push(this.userid);
+		mBot.remDj(this.userid);
 	},
 	Increment_SongCount : function(){
-	  ++this.songCount;
-	  ++this.totalSongCount;
-	  Log(this.name + "'s song count: " + this.songCount + " total of: " + this.totalSongCount);
+		++this.songCount;
+		++this.totalSongCount;
+		Log(this.name + "'s song count: " + this.songCount + " total of: " + this.totalSongCount);
 	},
 	Remove: function(){
 		//delete mUsers[this.userid];
