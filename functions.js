@@ -38,7 +38,7 @@ global.OnRegistered = function(data) {
 	Log("Registered");
 
 	/* Add to the cached user list */
-	listeners[pData.userid] = BaseUser().extend(pData);
+	listeners[data.userid] = BaseUser().extend(data);
 	++listeners.length;
 
 	/* Give new users a welcome message */
@@ -53,8 +53,8 @@ global.OnDeregistered = function(data) {
 	Log("Deregistered");
 
 	/* Remove the user from the cache */
-	for (var i = 0, len = pData.user.length; i < len; ++i) {
-		listeners[pData.user[i].userid].Remove();
+	for (var i = 0, len = data.user.length; i < len; ++i) {
+		listeners[data.user[i].userid].Remove();
 	}
 
 	/* Remove the user from the Queue if they were on it. */
