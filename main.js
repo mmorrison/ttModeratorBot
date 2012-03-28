@@ -15,7 +15,7 @@ if (useDB) {
 
 Log("Initializing");
 
-global.bot = new TTAPI(global.botAuthId, botUserId, botRoomId);
+global.bot = new TTAPI(global.botAuthId, botUserId);
 global.djs = [ ];
 global.djMaxPlays = 0;
 
@@ -53,6 +53,7 @@ bot.on("update_votes", OnUpdateVotes);
 bot.on("nosong", OnNoSong);
 bot.on("update_user", OnUpdateUser);
 bot.on("booted_user", OnBootedUser);
+bot.on("ready", OnReady);
 Log("Done");
 
 Log("Ready");

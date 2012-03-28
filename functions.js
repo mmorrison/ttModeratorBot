@@ -10,6 +10,14 @@ global.Log = function(data) {
 };
 
 /* ============== */
+/* OnReady Event */
+/* ============== */
+global.OnReady = function(data) {
+	Log("Bot Raedy");
+	bot.roomRegister(config.roomid);
+};
+
+/* ============== */
 /* OnRoomChanged Event */
 /* ============== */
 global.OnRoomChanged = function(data) {
