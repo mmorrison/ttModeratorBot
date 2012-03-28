@@ -61,7 +61,7 @@ global.OnDeregistered = function(data) {
 	}
 
 	/* Remove the user from the Queue if they were on it. */
-	RemoveFromQueue(data.user[0].userid);
+	RemoveFromQueue(data.user[0].name);
 };
 
 /* ============== */
@@ -224,7 +224,7 @@ global.Command = function(source, data) {
 		if (command == "q+") {
 			AddToQueue(data);
 		} else if (command == "q-") {
-			RemoveFromQueue(data.userid);
+			RemoveFromQueue(requestedUserName);
 		} else if (command == "q" || command == "wait") {
 			QueueStatus();
 		} else if (command == "rules") {
@@ -326,11 +326,6 @@ global.Command = function(source, data) {
 			Speak("Unknown Command");
 		}
 	}
-
-	/* Catch all for the morons that can't read. */
-	if (data.text == "q+"){
-		AddToQueue(data);
-	}
 };
 
 /* ============== */
@@ -370,7 +365,51 @@ global.LameSong = function(userid) {
 /* EnableQueue - Check to see if the queue should be enabled or if the playcount should be updated */
 /* ============== */
 global.EnableQueue = function() {
-	queueActive = useQueue;
+	var maxPlaysChanged = false;
+	bot.roomInfo(function(data) {
+		var listenerCount = data.room.metadata.listeners;
+
+		if (listenerCount <= level1Threshold) {
+			/* Disable the Queue */
+			if (queueActive && useQueue) {
+				queueActive = level1DjQueueActive;
+				Speak(msgQueueDisabled);
+				Log("Queue off");
+			}
+			/* Set the play count */
+			if (djMaxPlays != level1DjMaxPlays){
+				djMaxPlays = level1DjMaxPlays;
+				Speak(msgMaxPlays.replace(/\{maxplays\}/gi,djMaxPlays));
+			}
+			
+		} else if (listenerCount <= level2Threshold && listenerCount > level1Threshold) {
+			/* Enable the Queue */
+			if (!queueActive && useQueue) {
+				queueActive = level2DjQueueActive;
+				Speak(msgQueueEnabled);
+				Log("Queue activated");
+			}
+			/* Set the play count */
+			if (djMaxPlays != level2DjMaxPlays){
+				djMaxPlays = level2DjMaxPlays;
+				Speak(msgMaxPlays.replace(/\{maxplays\}/gi,djMaxPlays));
+			}
+			
+		} else if (listenerCount <= level3Threshold && listenerCount > level2Threshold) {
+			/* Enable the Queue */
+			if (!queueActive && useQueue) {
+				queueActive = level3DjQueueActive;
+				Speak(msgQueueEnabled);
+				Log("Queue activated");
+			}
+			/* Set the play count */
+			if (djMaxPlays != level3DjMaxPlays){
+				djMaxPlays = level3DjMaxPlays;
+				Speak(msgMaxPlays.replace(/\{maxplays\}/gi,djMaxPlays));
+			}
+			
+		}
+	});
 };
 
 /* ============== */
@@ -381,10 +420,10 @@ global.AddToQueue = function(data) {
 
 	if (queueActive && useQueue) { /* Check if they are a DJ */
 		if (djs.indexOf(data.userid) == -1) { /* Check if they are already on the queue*/
-			if (djQueue.indexOf(data.userid) == -1) {
-				djQueue.push(data.userid);
+			if (djQueue.indexOf(data.name) == -1) {
+				djQueue.push(data.name);
 
-				text = msgAddedToQueue.replace(/\{username\}/gi, data.name).replace(/\{queuesize\}/gi,djQueue.length);
+				text = msgAddedToQueue.replace(/\{username\}/gi, data.name);
 				TellUser(data.userid, text);
 				Log(djQueue);
 			}
@@ -400,10 +439,10 @@ global.AddToQueue = function(data) {
 /* ============== */
 /* RemoveFromQueue */
 /* ============== */
-global.RemoveFromQueue = function(userid) {
+global.RemoveFromQueue = function(name) {
 	if (queueActive && useQueue) {
-		if (djQueue.indexOf(userid) != -1) {
-			djQueue.splice(djQueue.indexOf(userid), 1);
+		if (djQueue.indexOf(name) != -1) {
+			djQueue.splice(djQueue.indexOf(name), 1);
 		}
 	}
 };
@@ -416,12 +455,12 @@ global.NewDjFromQueue = function(data) {
 		var text = "";
 
 		if (djQueue.length > 0) {
-			if (data.user[0].userid != djQueue[0]) {
+			if (data.user[0].name != djQueue[0]) {
 				bot.remDj(data.user[0].userid);
-				text = msgWrongQueuedDj.replace(/\{username\}/gi, allUsers[nextDj].name);
+				text = msgWrongQueuedDj.replace(/\{username\}/gi, nextDj);
 				TellUser(data.user[0].userid, text);
 			} else {
-				RemoveFromQueue(data.user[0].userid);
+				RemoveFromQueue(data.user[0].name);
 				clearInterval(refreshIntervalId);
 				nextDj = "";
 			}
@@ -435,7 +474,7 @@ global.NewDjFromQueue = function(data) {
 global.NextDjOnQueue = function() {
 	if (queueActive && useQueue) {
 		if (djQueue.length > 0) {
-			var text = msgNextQueuedDj.replace(/\{username\}/gi, allUsers[djQueue[0]].name).replace(/\{timeout\}/gi, nextDjQueueTimeout);
+			var text = msgNextQueuedDj.replace(/\{username\}/gi, djQueue[0]).replace(/\{timeout\}/gi, nextDjQueueTimeout);
 			Speak(text);
 			nextDj = djQueue[0];
 			nextDjTime = new Date();
@@ -464,11 +503,7 @@ global.CheckForNextDjFromQueue = function() {
 /* QueueStatus */
 /* ============== */
 global.QueueStatus = function() { /**/
-	var djList = "";
-	for (var i = 0; i < djQueue.length; i++){
-		djList += allUsers[djQueue[i]].name + ", ";
-	}
-	var text = msgQueueStatus.replace(/\{queuesize\}/gi, djQueue.length).replace(/\{queuedDjs\}/gi, djList);
+	var text = msgQueueStatus.replace(/\{queuesize\}/gi, queuedDjs.length).replace(/\{queuedDjs\}/gi, queuedDjs);
 	Speak(text);
 };
 
