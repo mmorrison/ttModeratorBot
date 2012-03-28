@@ -17,7 +17,6 @@ Log("Initializing");
 
 global.bot = new TTAPI(global.botAuthId, botUserId, botRoomId);
 global.djs = [ ];
-global.djSongCount = { };
 global.djMaxPlays = 0;
 
 // Fields for queue

@@ -34,8 +34,8 @@ global.OnRegistered = function(data) {
 	if(data.user.length === 0) return;
 	for(var i = 0; i < data.user.length; ++i){
 		/* Add to the cached user list */
-		listeners[data.user[i].userid] = BaseUser().extend(data.user[i]);
-		++listeners.length;
+		allUsers[data.user[i].userid] = BaseUser().extend(data.user[i]);
+		++allUsers.length;
 		/* Give new users a welcome message */
 		var text = msgWelcome.replace(/\{username\}/gi, data.user[i].name);
 		TellUser(text, data.user[i].userid);
@@ -50,7 +50,7 @@ global.OnDeregistered = function(data) {
 
 	/* Remove the user from the cache */
 	for (var i = 0, len = data.user.length; i < len; ++i) {
-		listeners[data.user[i].userid].Remove();
+		allUsers[data.user[i].userid].Remove();
 	}
 
 	/* Remove the user from the Queue if they were on it. */
@@ -110,7 +110,7 @@ global.OnNewSong = function(data) {
 
 	/* Update the play count if active */
 	if (djMaxPlays !== 0) {
-		djPlayCount[data.room.metadata.current_dj]++;
+		allUsers[data.room.metadata.current_dj].Increment_SongCount();
 		SpeakPlayCount();
 	}
 
@@ -471,9 +471,8 @@ global.QueueStatus = function() { /**/
 /* CheckIfDjShouldBeRemoved */
 /* ============== */
 global.CheckIfDjShouldBeRemoved = function(userid) {
-	if (djPlayCount[dj] >= djMaxPlays && djMaxPlays !== 0) {
-		bot.remDj(dj);
-		delete djPlayCount[dj];
+	if (allUsers[userid] >= djMaxPlays && djMaxPlays !== 0) {
+		allUsers[userid].RemoveDJ();
 		Speak(msgLastSong.replace(/\{username\}/gi, data.room.metadata.current_song.djname));
 	}
 };
@@ -484,9 +483,7 @@ global.CheckIfDjShouldBeRemoved = function(userid) {
 global.SpeakPlayCount = function() {
 	var playCount = "";
 	for (var i = 0; i < djs.length; i++) {
-		if (djPlayCount[djs[i]] !== undefined) {
-			playCount += djPlayCount[djs[i]];
-		}
+		playCount += allUsers[djs[i]];
 	}
 	Speak(msgPlayCount.replace(/\{playcount\}/gi, playCount));
 };
@@ -621,6 +618,9 @@ global.Pause = function(ms) {
 	while (new Date() < ms) {}
 };
 
+/* ============== */
+/* Pause */
+/* ============== */
 Object.defineProperty(Object.prototype, "extend", {
     enumerable: false,
     value: function(from) {
@@ -655,42 +655,30 @@ BaseUser = function() {
 		bootAfterSong: false,
 		joinedTime: Date.now(),
 		Boot: function(pReason) {
-			mBot.bootUser(this.userid, pReason ? pReason : "");
+			bot.bootUser(this.userid, pReason ? pReason : "");
 		},
 		IsiOS: function() {
 			return this.laptop === "iphone";
 		},
 		IsBot: function() {
-			return this.userid == mUserId;
+			return this.userid == botUserId;
 		},
 		RemoveDJ: function() {
-			if (!mIsModerator || !this.isDJ || this.IsBot()) return;
-			mJustRemovedDJ.push(this.userid);
-			mBot.remDj(this.userid);
+			if (!IsModerator || !this.isDJ || this.IsBot()) return;
+			bot.remDj(this.userid);
 		},
 		Increment_SongCount: function() {
 			++this.songCount;
 			++this.totalSongCount;
 			Log(this.name + "'s song count: " + this.songCount + " total of: " + this.totalSongCount);
 		},
-		Remove: function() {
-			//delete listeners[this.userid];
-			var sUserId = this.userid;
-			mRecentlyLeft[sUserId] = setTimeout(function() {
-				if (!mRecentlyLeft[sUserId]) return;
-				delete listeners[sUserId];
-				delete mRecentlyLeft[sUserId];
-			}, mTimeForCacheFlush);
-			this.Save(); ///Save(mRoomShortcut, this);
-		},
 		Initialize: function() {
 			this.songCount = 0;
 			this.afkTime = Date.now();
 			this.afkWarned = false;
 			this.bootAfterSong = false;
-			this.isDJ = mDJs.indexOf(this.userid) != -1;
-			this.isMod = mModerators.indexOf(this.userid) != -1;
-			this.isOwner = mOwners.indexOf(this.userid) != -1;
+			this.isDJ = djs.indexOf(this.userid) != -1;
+			this.isMod = IsModerator(this.userid);
 			this.joinedTime = Date.now();
 		}
 	};
