@@ -14,7 +14,7 @@ global.Log = function(data) {
 /* ============== */
 global.OnReady = function(data) {
 	Log("Bot Raedy");
-	bot.roomRegister(config.roomid);
+	bot.roomRegister(botRoomId);
 };
 
 /* ============== */
