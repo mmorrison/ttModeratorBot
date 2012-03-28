@@ -487,11 +487,12 @@ global.CheckIfDjShouldBeRemoved = function(userid) {
 /*  */
 /* ============== */
 global.SpeakPlayCount = function() {
-	var playCount = "";
+	var count = ['x', 'x', 'x', 'x', 'x'];
 	for (var i = 0; i < djs.length; i++) {
-		playCount += allUsers[djs[i]].songCount;
+		count[i] = allUsers[djs[i]].songCount;
 	}
-	Speak(msgPlayCount.replace(/\{playcount\}/gi, playCount));
+	var playCount = count[0] + '-' + count[1] + '-' + count[2] + '-' + count[3] + '-' + count[4];
+	Speak(msgPlayCount.replace(/\{playcount\}/gi,  playCount));
 };
 
 /* ============== */
