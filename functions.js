@@ -13,7 +13,7 @@ global.Log = function(data) {
 /* OnReady Event */
 /* ============== */
 global.OnReady = function(data) {
-	Log("Bot Raedy");
+	Log("Bot Ready");
 	bot.roomRegister(botRoomId);
 };
 
@@ -24,7 +24,7 @@ global.OnRoomChanged = function(data) {
 	Log("Room Changed");
 
 	// Register all of the users in the room.
-	RegisterUsers(data.room.users);
+	RegisterUsers(data.users);
 
 	/* Check if the queue should be enabled. */
 	EnableQueue();
@@ -39,14 +39,12 @@ global.OnRoomChanged = function(data) {
 global.OnRegistered = function(data) {
 	Log("Registered");
 
-	if(data.user.length === 0) return;
-	for(var i = 0; i < data.user.length; ++i){
-		/* Add to the cached user list */
+	if (data.user.length === 0) return;
+	for (var i = 0; i < data.user.length; ++i) { /* Add to the cached user list */
 		allUsers[data.user[i].userid] = BaseUser().extend(data.user[i]);
-		++allUsers.length;
-		/* Give new users a welcome message */
+		++allUsers.length; /* Give new users a welcome message */
 		var text = msgWelcome.replace(/\{username\}/gi, data.user[i].name);
-		TellUser(text, data.user[i].userid);
+		TellUser(data.user[i].userid, text);
 	}
 };
 
@@ -79,13 +77,14 @@ global.OnRemModerator = function(data) {};
 /* OnAddDJ Event */
 /* ============== */
 global.OnAddDJ = function(data) {
-	Log("Add DJ;");
+	Log("Add DJ");
+
+	var user = allUsers[data.user[0].userid];
+	djs.push(user.userid);
+	user.isDj = true;
 
 	/* Check if they are from the queue if there is one */
 	NewDjFromQueue(data);
-
-	/* Update the DJ list */
-	UpdateDjs();
 };
 
 /* ============== */
@@ -94,11 +93,9 @@ global.OnAddDJ = function(data) {
 global.OnRemDJ = function(data) {
 	Log("Remove DJ");
 
-	/* Remove thier DJ count*/
-	delete djPlayCount[data.user[0].userid];
-
-	/* Update the DJ list */
-	UpdateDjs();
+	var user = allUsers[data.user[0].userid];
+	user.isDj = false;
+	djs.splice(djs.indexOf(user.userid), 1);
 
 	/* Notify the next DJ on the list */
 	NextDjOnQueue();
@@ -241,20 +238,20 @@ global.Command = function(source, data) {
 			LameSong(data.userid);
 		} else if (command == "rules") {
 			text = msgRules.replace(/\{username\}/gi, data.name);
-			TellUser(text);
+			TellUser(data.userid, text);
 		} else if (command == "info") {
 			text = msgInfo.replace(/\{username\}/gi, data.name);
-			TellUser(text);
+			TellUser(data.userid, text);
 		} else if (command == "qrules") {
 			text = msgQueueRules.replace(/\{username\}/gi, data.name);
-			TellUser(text);
+			TellUser(data.userid, text);
 		} else if (command == "help") {
 			text = msgHelp.replace(/\{username\}/gi, data.name);
-			TellUser(text);
+			TellUser(data.userid, text);
 			if (IsModerator(data.userid)) {
 				Pause(250);
 				text = msgModHelp.replace(/\{username\}/gi, data.name);
-				TellUser(text);
+				TellUser(data.userid, text);
 			}
 		} else if (command == "whois" || command == "about") {
 			Speak(msgAbout);
@@ -331,14 +328,18 @@ global.Command = function(source, data) {
 	}
 };
 
-global.RegisterUsers = function(pUsers){
+/* ============== */
+/* RegisterUsers -  */
+/* ============== */
+global.RegisterUsers = function(pUsers) {
 	Log("Registering Users");
-	if(!pUsers || !pUsers.length) return;
-	for(var i = 0; i < pUsers.length; ++i){
+	if (!pUsers || !pUsers.length) return;
+	for (var i = 0; i < pUsers.length; ++i) {
 		var sUser = pUsers[i];
 		allUsers[sUser.userid] = BaseUser().extend(sUser);
 		++allUsers.length;
 	}
+	Log("Done registering users");
 };
 
 /* ============== */
@@ -554,7 +555,7 @@ global.Speak = function(text) {
 /* TellUser - Give information to a specific user */
 /* ============== */
 global.TellUser = function(userid, text) {
-	if (!IphoneUser(userid)) {
+	if (!IphoneUser(userid) && !allUsers[userid].IsBot()) {
 		bot.pm(text, userid);
 	} else {
 		bot.speak(text);
@@ -619,18 +620,18 @@ global.Pause = function(ms) {
 /* Pause */
 /* ============== */
 Object.defineProperty(Object.prototype, "extend", {
-    enumerable: false,
-    value: function(from) {
-        var props = Object.getOwnPropertyNames(from);
-        var dest = this;
-        props.forEach(function(name) {
-            if (name in dest) {
-                var destination = Object.getOwnPropertyDescriptor(from, name);
-                Object.defineProperty(dest, name, destination);
-            }
-        });
-        return this;
-    }
+	enumerable: false,
+	value: function(from) {
+		var props = Object.getOwnPropertyNames(from);
+		var dest = this;
+		props.forEach(function(name) {
+			if (name in dest) {
+				var destination = Object.getOwnPropertyDescriptor(from, name);
+				Object.defineProperty(dest, name, destination);
+			}
+		});
+		return this;
+	}
 });
 
 /* ============== */
@@ -668,6 +669,10 @@ BaseUser = function() {
 			++this.songCount;
 			++this.totalSongCount;
 			Log(this.name + "'s song count: " + this.songCount + " total of: " + this.totalSongCount);
+		},
+		Remove: function() {
+			var sUserId = this.userid;
+			delete allUsers[sUserId];
 		},
 		Initialize: function() {
 			this.songCount = 0;
