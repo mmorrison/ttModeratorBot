@@ -557,7 +557,7 @@ global.TellUser = function(userid, text) {
 /* IphoneUser - Checks to see if the user is on an iPhone (can't PM) */
 /* ============== */
 global.IphoneUser = function(userid) {
-	allUsers[userid].IsiOS();
+	return allUsers[userid].IsiOS();
 };
 
 /* ============== */
