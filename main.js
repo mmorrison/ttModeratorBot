@@ -32,7 +32,7 @@ global.botOnTable = false;
 global.botIsPlayingSong = false;
 
 // Listener cache
-global.listeners = {length: 0};
+global.allUsers = {length: 0};
 
 Log("Done");
 
