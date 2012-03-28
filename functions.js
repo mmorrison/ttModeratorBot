@@ -19,10 +19,10 @@ global.OnRoomChanged = function(data) {
 	RegisterUsers(data.room.users);
 
 	/* Check if the queue should be enabled. */
-	//EnableQueue();
+	EnableQueue();
 
 	/* Check if the bot needs to step up to the table */
-	//CheckAutoDj();
+	CheckAutoDj();
 };
 
 /* ============== */
@@ -72,9 +72,6 @@ global.OnRemModerator = function(data) {};
 /* ============== */
 global.OnAddDJ = function(data) {
 	Log("Add DJ;");
-
-	/* Add a play count for the DJ */
-	djSongCount[data.user[0].userid] = 0;
 
 	/* Check if they are from the queue if there is one */
 	NewDjFromQueue(data);
