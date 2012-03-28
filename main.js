@@ -29,6 +29,7 @@ global.refreshInvalidId = null;
 global.botVoted = false;
 global.botOnTable = false;
 global.botIsPlayingSong = false;
+global.botStepDownAfterSong = false;
 
 // Listener cache
 global.allUsers = {length: 0};

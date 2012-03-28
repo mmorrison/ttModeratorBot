@@ -104,14 +104,18 @@ global.OnRemDJ = function(data) {
 global.OnNewSong = function(data) {
 	Log("New Song");
 
-	/* Check if queue status needs updating and update max plays */
-	EnableQueue();
+	if (allUsers[data.room.metadata.current_dj].IsBot()){
+		botIsPlayingSong = true;
+	}
 
 	/* Update the play count if active */
 	if (djMaxPlays !== 0) {
 		allUsers[data.room.metadata.current_dj].Increment_SongCount();
 		SpeakPlayCount();
 	}
+
+	/* Check if queue status needs updating and update max plays */
+	EnableQueue();
 
 	/* If the bot is on the table, vote up the song */
 	if (botOnTable) {
@@ -124,7 +128,10 @@ global.OnNewSong = function(data) {
 /* ============== */
 global.OnEndSong = function(data) {
 	Log("End Song");
-
+	
+	if (allUsers[data.room.metadata.current_dj].IsBot()){
+		botIsPlayingSong = false;
+	}
 	/* Reset bot details */
 	botVoted = false;
 
@@ -479,7 +486,10 @@ global.CheckIfDjShouldBeRemoved = function(userid) {
 	if (allUsers[userid].songCount >= djMaxPlays && djMaxPlays !== 0) {
 		allUsers[userid].RemoveDJ();
 		Speak(msgLastSong.replace(/\{username\}/gi, allUsers[userid].name));
-		//TellUser(userid, "You can");
+	}
+	if (botStepDownAfterSong){
+		allUsers[userid].RemoveDJ();
+		botStepDownAfterSong = false;
 	}
 };
 
@@ -518,8 +528,10 @@ global.CheckAutoDj = function() {
 			}
 
 			if (data.room.metadata.djcount == data.room.metadata.max_djs) {
-				if (botOnTable) {
+				if (botOnTable && !botIsPlayingSong) {
 					StepDown();
+				} else if (botOnTable && botIsPlayingSong){
+					botStepDownAfterSong = true;
 				}
 			}
 		});
