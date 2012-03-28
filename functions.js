@@ -546,7 +546,7 @@ global.Speak = function(text) {
 /* TellUser - Give information to a specific user */
 /* ============== */
 global.TellUser = function(userid, text) {
-	if (!IphoneUser) {
+	if (!IphoneUser(userid)) {
 		bot.pm(text, userid);
 	} else {
 		bot.speak(text);
@@ -557,11 +557,7 @@ global.TellUser = function(userid, text) {
 /* IphoneUser - Checks to see if the user is on an iPhone (can't PM) */
 /* ============== */
 global.IphoneUser = function(userid) {
-	if (iPhoneUserList.indexOf(userid) != -1) {
-		return true;
-	} else {
-		return false;
-	}
+	allUsers[userid].IsiOS();
 };
 
 /* ============== */
