@@ -141,6 +141,7 @@ global.OnSnagged = function(data) {};
 /* ============== */
 global.OnUpdateVotes = function(data) { /* If autobop is enabled, determine if the bot should autobop or not based on votes */
 	if (useAutoBop) {
+		Log("Someone voted");
 		var percentAwesome = 0;
 		var percentLame = 0;
 
@@ -529,7 +530,7 @@ global.StepUp = function(text) {
 /* StepUp - Bot steps up to the decks */
 /* ============== */
 global.StepDown = function(text) {
-	bot.speak(msgBotLeaveTable);
+	Speak(msgBotLeaveTable);
 	bot.remDj();
 	botOnTable = false;
 };
@@ -538,11 +539,7 @@ global.StepDown = function(text) {
 /* Speak - Bot broadcasts to everyone */
 /* ============== */
 global.Speak = function(text) {
-	if (!IphoneUser) {
-		bot.pm(text, userid);
-	} else {
-		bot.speak(text);
-	}
+	bot.speak(text);
 };
 
 /* ============== */
