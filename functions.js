@@ -25,6 +25,7 @@ global.OnRoomChanged = function(data) {
 
 	// Register all of the users in the room.
 	RegisterUsers(data.users);
+	UpdateDjs();
 
 	/* Check if the queue should be enabled. */
 	EnableQueue();
@@ -79,9 +80,7 @@ global.OnRemModerator = function(data) {};
 global.OnAddDJ = function(data) {
 	Log("Add DJ");
 
-	var user = allUsers[data.user[0].userid];
-	djs.push(user.userid);
-	user.isDj = true;
+	UpdateDjs();
 
 	/* Check if they are from the queue if there is one */
 	NewDjFromQueue(data);
@@ -93,9 +92,7 @@ global.OnAddDJ = function(data) {
 global.OnRemDJ = function(data) {
 	Log("Remove DJ");
 
-	var user = allUsers[data.user[0].userid];
-	user.isDj = false;
-	djs.splice(djs.indexOf(user.userid), 1);
+	UpdateDjs();
 
 	/* Notify the next DJ on the list */
 	NextDjOnQueue();
@@ -118,8 +115,7 @@ global.OnNewSong = function(data) {
 
 	/* If the bot is on the table, vote up the song */
 	if (botOnTable) {
-		bot.vote('up');
-		botVoted = true;
+		AwesomeSong();
 	}
 };
 
@@ -146,7 +142,6 @@ global.OnSnagged = function(data) {};
 /* ============== */
 global.OnUpdateVotes = function(data) { /* If autobop is enabled, determine if the bot should autobop or not based on votes */
 	if (useAutoBop) {
-		Log("Someone voted");
 		var percentAwesome = 0;
 		var percentLame = 0;
 
@@ -158,17 +153,11 @@ global.OnUpdateVotes = function(data) { /* If autobop is enabled, determine if t
 		}
 
 		if ((percentAwesome - percentLame) > 25) {
-			if (!botVoted) {
-				bot.vote('up');
-				botVoted = true;
-			}
+			AwesomeSong();
 		}
 
 		if ((percentLame - percentAwesome) > 25) {
-			if (!botVoted) {
-				bot.vote('down');
-				botVoted = true;
-			}
+			LameSong();
 		}
 	}
 };
@@ -210,12 +199,18 @@ global.Command = function(source, data) {
 	var pm = false;
 	var speak = false; /* First break apart the comand */
 	var result = data.text.match(/^\!(.*?)( .*)?$/);
+	var requestedUser = "";
+	var requestedUserName = "";
 
 	if (source == "speak") {
 		speak = true;
+		requestedUser = data.userid;
+		requestedUserName = data.name;
 	}
 	if (source == "pm") {
 		pm = true;
+		requestedUser = data.senderid;
+		requestedUserName = allUsers[requestedUser].name;
 	}
 
 	if (result) {
@@ -229,96 +224,101 @@ global.Command = function(source, data) {
 		if (command == "q+") {
 			AddToQueue(data);
 		} else if (command == "q-") {
-			RemoveFromQueue(data.name);
+			RemoveFromQueue(requestedUserName);
 		} else if (command == "q" || command == "wait") {
 			QueueStatus();
-		} else if (command == "a" || command == "awesome") {
-			AwesomeSong(data.userid);
-		} else if (command == "l" || command == "lame") {
-			LameSong(data.userid);
 		} else if (command == "rules") {
-			text = msgRules.replace(/\{username\}/gi, data.name);
-			TellUser(data.userid, text);
+			text = msgRules.replace(/\{username\}/gi, requestedUserName);
+			TellUser(requestedUser, text);
 		} else if (command == "info") {
-			text = msgInfo.replace(/\{username\}/gi, data.name);
-			TellUser(data.userid, text);
+			text = msgInfo.replace(/\{username\}/gi, requestedUserName);
+			TellUser(requestedUser, text);
 		} else if (command == "qrules") {
-			text = msgQueueRules.replace(/\{username\}/gi, data.name);
-			TellUser(data.userid, text);
+			text = msgQueueRules.replace(/\{username\}/gi, requestedUserName);
+			TellUser(requestedUser, text);
 		} else if (command == "help") {
-			text = msgHelp.replace(/\{username\}/gi, data.name);
-			TellUser(data.userid, text);
-			if (IsModerator(data.userid)) {
+			text = msgHelp.replace(/\{username\}/gi, requestedUserName);
+			TellUser(requestedUser, text);
+			if (IsModerator(requestedUser)) {
 				Pause(250);
-				text = msgModHelp.replace(/\{username\}/gi, data.name);
-				TellUser(data.userid, text);
+				text = msgModHelp.replace(/\{username\}/gi, requestedUserName);
+				TellUser(requestedUser, text);
 			}
 		} else if (command == "whois" || command == "about") {
 			Speak(msgAbout);
 		} else if (command == "count") {
 			SpeakPlayCount();
 		} else if (command == "issue" || command == "bug" || command == "feature" || command == "idea") {
-			Speak(msgBugs);
+			TellUser(requestedUser, msgBugs);
 		}
 
 		/**** MODERATOR FUNCTIONS ****/
-		else if (command == "realcount") {
+		/*else if (command == "a" || command == "awesome") {
 			if (IsModerator(data.userid)) {
+				AwesomeSong();
+			}
+		} else if (command == "l" || command == "lame") {
+			if (IsModerator(data.userid)) {
+				LameSong();
+			}
+		}*/
+		else if (command == "realcount") {
+			//if (IsModerator(data.userid)) {
 				if (param === "") {
-					Speak("Usage: !realcount xxxxx");
+					TellUser(requestedUser, "Usage: !realcount xxxxx");
 				} else {
 					SetRealCount(param);
 				}
-			}
+			//}
 		} else if (command == "skip") {
-			if (IsModerator(data.userid)) {
+			if (IsModerator(requestedUser)) {
 				bot.skip();
 			}
 		} else if (command == "autodj" && pm) {
-			if (IsModerator(data.userid)) {
+			if (IsModerator(requestedUser)) {
 				if (param == "true" || param == "false") {
 					useAutoDj = param;
-					TellUser(data.userid, "Auto DJ set to " + useAutoDj);
+					TellUser(requestedUser, "Auto DJ set to " + useAutoDj);
 				} else {
-					TellUser(data.userid, "Usage: !autodj true or false. Currently it is set to " + useAutoDj);
+					TellUser(requestedUser, "Usage: !autodj true or false. Currently it is set to " + useAutoDj);
 				}
 			}
 		} else if (command == "autobop" && pm) {
-			if (IsModerator(data.userid)) {
+			if (IsModerator(requestedUser)) {
 				if (param == "true" || param == "false") {
-					useAutoDj = param;
-					TellUser(data.userid, "Auto bop set to " + useAutoBop);
+					useAutoBop = param;
+					TellUser(requestedUser, "Auto bop set to " + useAutoBop);
 				} else {
-					TellUser(data.userid, "Usage: !autobop true or false. Currently it is set to " + useAutoBop);
+					TellUser(requestedUser, "Usage: !autobop true or false. Currently it is set to " + useAutoBop);
 				}
 			}
 		} else if (command == "consolelog" && pm) {
-			if (IsModerator(data.userid)) {
+			if (IsModerator(requestedUser)) {
 				if (param == "true" || param == "false") {
-					useAutoDj = param;
+					logtoconsole = param;
 					TellUser(data.userid, "Auto DJ set to " + logtoconsole);
 				} else {
 					TellUser(data.userid, "Usage: !consolelog true or false. Currently it is set to " + logtoconsole);
 				}
 			}
 		} else if (command == "setlaptop" && pm) {
-			if (IsModerator(data.userid)) {
+			if (IsModerator(requestedUser)) {
 				if (param === "") {
-					Speak("Usage: !setlaptop xxxxx");
+					TellUser(requestedUser, "Usage: !setlaptop xxxxx");
 				} else {
 					bot.modifyLaptop(param);
 				}
 			}
 		} else if (command == "setavatar" && pm) {
-			if (IsModerator(data.userid)) {
+			if (IsModerator(requestedUser)) {
 				if (param === "") {
-					Speak("Usage: !setavatar #");
+					TellUser(requestedUser, "Usage: !setavatar #");
 				} else {
 					bot.setAvatar(param);
 				}
 			}
 		} else if (command == "addsong") {
-			TellUser(data.userid, "Not yet implemented");
+			TellUser(requestedUser, "Not yet implemented");
 		}
 
 		/* Catch all */
@@ -340,6 +340,25 @@ global.RegisterUsers = function(pUsers) {
 		++allUsers.length;
 	}
 	Log("Done registering users");
+};
+
+/* ============== */
+/* AwesomeSong -  */
+/* ============== */
+global.AwesomeSong = function(userid) {
+	if (!botVoted) {
+		bot.vote('up');
+		botVoted = true;
+	}
+};
+/* ============== */
+/* AwesomeSong -  */
+/* ============== */
+global.c = function(userid) {
+	if (!botVoted) {
+		bot.vote('down');
+		botVoted = true;
+	}
 };
 
 /* ============== */
@@ -477,9 +496,10 @@ global.QueueStatus = function() { /**/
 /* CheckIfDjShouldBeRemoved */
 /* ============== */
 global.CheckIfDjShouldBeRemoved = function(userid) {
-	if (allUsers[userid] >= djMaxPlays && djMaxPlays !== 0) {
+	if (allUsers[userid].songCount >= djMaxPlays && djMaxPlays !== 0) {
 		allUsers[userid].RemoveDJ();
-		Speak(msgLastSong.replace(/\{username\}/gi, data.room.metadata.current_song.djname));
+		Speak(msgLastSong.replace(/\{username\}/gi, allUsers[userid].name));
+		//TellUser(userid, "You can");
 	}
 };
 
@@ -489,7 +509,7 @@ global.CheckIfDjShouldBeRemoved = function(userid) {
 global.SpeakPlayCount = function() {
 	var playCount = "";
 	for (var i = 0; i < djs.length; i++) {
-		playCount += allUsers[djs[i]];
+		playCount += allUsers[djs[i]].songCount;
 	}
 	Speak(msgPlayCount.replace(/\{playcount\}/gi, playCount));
 };
@@ -497,12 +517,12 @@ global.SpeakPlayCount = function() {
 /* ============== */
 /* SetRealCount */
 /* ============== */
-global.SetRealCount = function() {
+global.SetRealCount = function(param) {
 	for (var i = 0; i < param.length; i++) {
 		var count = param.substring(i, i + 1);
-		djPlayCount[djs[i]] = count;
+		allUsers[djs[i]].songCount = count;
 	}
-	PlayCount();
+	SpeakPlayCount();
 };
 
 /* ============== */
