@@ -15,7 +15,7 @@ if (useDB) {
 
 Log("Initializing");
 
-global.bot = new TTAPI(global.botAuthId, botUserId);
+global.bot = new TTAPI(botAuthId, botUserId);
 global.djs = [ ];
 global.djMaxPlays = 0;
 
