@@ -326,13 +326,12 @@ global.Command = function(source, data) {
 };
 
 global.RegisterUsers = function(pUsers){
+	Log("Registering Users");
 	if(!pUsers || !pUsers.length) return;
-	var sUserIDs = [];
 	for(var i = 0; i < pUsers.length; ++i){
 		var sUser = pUsers[i];
-		mUsers[sUser.userid] = BaseUser().extend(sUser);
-		++mUsers.length;
-		sUserIDs.push(sUser.userid);
+		allUsers[sUser.userid] = BaseUser().extend(sUser);
+		++allUsers.length;
 	}
 };
 
