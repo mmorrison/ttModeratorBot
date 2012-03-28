@@ -499,9 +499,13 @@ global.SpeakPlayCount = function() {
 /* SetRealCount */
 /* ============== */
 global.SetRealCount = function(param) {
-	for (var i = 0; i < param.length; i++) {
-		var count = param.substring(i, i + 1);
-		allUsers[djs[i]].songCount = count;
+	var array = string.split('-');
+	if (array.length != 5) {
+		Speak("Invalid syntax");
+		return;
+	}
+	for (var i = 0; i < array.length; i++) {
+		allUsers[djs[i]].songCount = array[i];
 	}
 	SpeakPlayCount();
 };
