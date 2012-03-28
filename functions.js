@@ -15,21 +15,14 @@ global.Log = function(data) {
 global.OnRoomChanged = function(data) {
 	Log("Room Changed");
 
-	if(data.room.users.length === 0) return;
-	for(var i = 0; i < data.room.users.length; ++i){
-		/* Add to the cached user list */
-		listeners[data.room.users[i].userid] = BaseUser().extend(data.room.users[i]);
-		++listeners.length;
-		/* Give new users a welcome message */
-		var text = msgWelcome.replace(/\{username\}/gi, data.room.users[i].name);
-		TellUser(text, data.room.users[i].userid);
-	}
+	// Register all of the users in the room.
+	RegisterUsers(data.room.users);
 
 	/* Check if the queue should be enabled. */
-	EnableQueue();
+	//EnableQueue();
 
 	/* Check if the bot needs to step up to the table */
-	CheckAutoDj();
+	//CheckAutoDj();
 };
 
 /* ============== */

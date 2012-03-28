@@ -22,10 +22,7 @@ global.djMaxPlays = 0;
 
 // Fields for queue
 global.queueActive = false;
-global.activeDj = null;
-global.startTime = null;
 global.djQueue = [ ];
-global.djPlayCount = { };
 global.nextDj = null;
 global.nextDjTime = null;
 global.refreshInvalidId = null;
