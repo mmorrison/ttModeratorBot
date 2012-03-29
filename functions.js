@@ -92,6 +92,10 @@ global.OnAddDJ = function(data) {
 global.OnRemDJ = function(data) {
 	Log("Remove DJ");
 
+	if (IsBot(data.user[0].userid)) {
+		StepDown();
+	}
+
 	UpdateDjs();
 
 	/* Notify the next DJ on the list */
@@ -132,7 +136,9 @@ global.OnEndSong = function(data) {
 
 	if (IsBot(data.room.metadata.current_dj)) {
 		botIsPlayingSong = false;
-	} /* Reset bot details */
+	}
+
+	/* Reset bot details */
 	botVoted = false;
 
 	/* Check if the Dj has played their set */
@@ -270,13 +276,13 @@ global.Command = function(source, data) {
 			}
 		}*/
 		else if (command == "realcount") {
-			//if (IsMod(data.userid)) {
-			if (param === "") {
-				TellUser(requestedUser, "Usage: !realcount xxxxx");
-			} else {
-				SetRealCount(param);
+			if (IsMod(data.userid)) {
+				if (param === "") {
+					TellUser(requestedUser, "Usage: !realcount xxxxx");
+				} else {
+					SetRealCount(param);
+				}
 			}
-			//}
 		} else if (command == "skip") {
 			if (IsMod(requestedUser)) {
 				bot.skip();
@@ -482,7 +488,7 @@ global.QueueStatus = function() { /**/
 /* CheckIfDjShouldBeRemoved */
 /* ============== */
 global.CheckIfDjShouldBeRemoved = function(userid) {
-	if (allUsers[userid].songCount >= djMaxPlays && djMaxPlays !== 0) {
+	if (allUsers[userid].songCount >= djMaxPlays && djMaxPlays !== 0 && !IsBot(userid)) {
 		allUsers[userid].RemoveDJ();
 		Speak(msgLastSong.replace(/\{username\}/gi, allUsers[userid].name));
 	}
@@ -508,13 +514,15 @@ global.SpeakPlayCount = function() {
 /* SetRealCount */
 /* ============== */
 global.SetRealCount = function(param) {
-	var array = string.split('-');
+	var array = param.split('-');
 	if (array.length != 5) {
 		Speak("Invalid syntax");
 		return;
 	}
 	for (var i = 0; i < array.length; i++) {
-		allUsers[djs[i]].songCount = array[i];
+		if (array[i] != 'x') {
+			allUsers[djs[i]].songCount = array[i];
+		}
 	}
 	SpeakPlayCount();
 };
@@ -688,9 +696,8 @@ BaseUser = function() {
 		isDJ: false,
 		laptop: "pc",
 		afkWarned: false,
-		afkTime: Date.now(),
+		afkCount: 0,
 		songCount: 0,
-		totalSongCount: 0,
 		bootAfterSong: false,
 		joinedTime: Date.now(),
 		Boot: function(pReason) {
@@ -703,13 +710,12 @@ BaseUser = function() {
 			return this.userid == botUserId;
 		},
 		RemoveDJ: function() {
-			if (!IsModerator || !this.isDJ || this.IsBot()) return;
+			if (this.IsBot()) return;
 			bot.remDj(this.userid);
 		},
 		Increment_SongCount: function() {
 			++this.songCount;
-			++this.totalSongCount;
-			Log(this.name + "'s song count: " + this.songCount + " total of: " + this.totalSongCount);
+			Log(this.name + "'s song count: " + this.songCount);
 		},
 		Remove: function() {
 			var sUserId = this.userid;
