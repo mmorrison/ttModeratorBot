@@ -6,13 +6,17 @@ Special thanks to the guys in [turntable room]() for the playcount sample code.
 
 ###Features
 
-* Queue
-* DJs can only play a # of songs
+* Has a queue for listeners to sign up
+* Only allows a certain number of plays each time the DJ is on the table and boots them off when their turn is done.
 
 ###Setup
 
 1. Install node.js
-2. Install the ttapi
+2. Install ttapi from NPM
+3. Install mysql from NPM (optional)
+4. Install forever from NPM (optional but recommended)
+5. Install the files somewhere or use git to bring the files to your computer
+6. Setup the make a copy of the config file and setup your information and rules.
 
 ###Changelog
 
