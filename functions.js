@@ -39,7 +39,6 @@ global.OnRoomChanged = function(data) {
 /* ============== */
 global.OnRegistered = function(data) {
 	Log("Registered");
-
 	if (data.user.length === 0) return;
 	for (var i = 0; i < data.user.length; ++i) { /* Add to the cached user list */
 		allUsers[data.user[i].userid] = BaseUser().extend(data.user[i]);
@@ -153,7 +152,8 @@ global.OnSnagged = function(data) {};
 /* ============== */
 /*  */
 /* ============== */
-global.OnUpdateVotes = function(data) { /* If autobop is enabled, determine if the bot should autobop or not based on votes */
+global.OnUpdateVotes = function(data) {
+	/* If autobop is enabled, determine if the bot should autobop or not based on votes */
 	if (useAutoBop) {
 		var percentAwesome = 0;
 		var percentLame = 0;
@@ -201,7 +201,9 @@ global.OnSpeak = function(data) {
 /* OnPmmed Event */
 /* ============== */
 global.OnPmmed = function(data) {
-	Command("pm", data);
+	if (data.senderid != '4f471af5590ca24b6600145b'){
+		Command("pm", data);
+	}
 };
 
 /* ============== */
@@ -223,6 +225,7 @@ global.Command = function(source, data) {
 	if (source == "pm") {
 		pm = true;
 		requestedUser = data.senderid;
+		Log(allUsers);
 		requestedUserName = allUsers[requestedUser].name;
 	}
 
@@ -381,9 +384,16 @@ global.LameSong = function(userid) {
 /* ============== */
 /* EnableQueue - Check to see if the queue should be enabled or if the playcount should be updated */
 /* ============== */
-global.EnableQueue = function() {
+/* global.EnableQueue = function() {
 	queueActive = useQueue;
-};
+};*/
+
+try{
+	require("./enableQueue.js");
+} catch (e){
+	Log("Missing custom EnableQueue, loading default.");
+	require("./enableQueueDefault.js");
+}
 
 /* ============== */
 /* AddToQueue */
@@ -401,7 +411,7 @@ global.AddToQueue = function(data) {
 				Log(djQueue);
 			}
 		} else {
-			text = msgOnQueue.replace(/\{username\}/gi, data.name);
+			text = msgQueueOnTable.replace(/\{username\}/gi, data.name);
 			TellUser(data.userid, text);
 		}
 	} else {
@@ -462,7 +472,7 @@ global.NextDjOnQueue = function() {
 /* CheckForNextDjFromQueue */
 /* ============== */
 global.CheckForNextDjFromQueue = function() {
-	if (nextDj !== "" && queuedDjs[0] == nextDj) {
+	if (nextDj !== "" && djQueue[0] == nextDj) {
 		var currentTime = new Date();
 		if (currentTime.getTime() - nextDjTime.getTime() > (nextDjQueueTimeout * 1000)) {
 			RemoveFromQueue(nextDj);
@@ -596,10 +606,12 @@ global.Speak = function(text) {
 /* TellUser - Give information to a specific user */
 /* ============== */
 global.TellUser = function(userid, text) {
-	if (!IphoneUser(userid) && !allUsers[userid].IsBot()) {
-		bot.pm(text, userid);
-	} else {
-		bot.speak(text);
+	if (!IsBot(userid)) {
+		if (!IphoneUser(userid)) {
+			bot.pm(text, userid);
+		} else {
+			bot.speak(text);
+		}
 	}
 };
 
