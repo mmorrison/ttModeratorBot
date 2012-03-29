@@ -386,10 +386,6 @@ global.LameSong = function(userid) {
 /* ============== */
 /* EnableQueue - Check to see if the queue should be enabled or if the playcount should be updated */
 /* ============== */
-/* global.EnableQueue = function() {
-	queueActive = useQueue;
-};*/
-
 try {
 	require("./enableQueue.js");
 } catch (e) {
