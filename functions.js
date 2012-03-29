@@ -53,10 +53,13 @@ global.OnRegistered = function(data) {
 /* ============== */
 global.OnDeregistered = function(data) {
 	Log("Deregistered");
+	Log(data);
 
 	/* Remove the user from the cache */
-	for (var i = 0, len = data.user.length; i < len; ++i) {
-		allUsers[data.user[i].userid].Remove();
+	if (data.user.length !== 0) {
+		for (var i = 0, len = data.user.length; i < len; ++i) {
+			allUsers[data.user[i].userid].Remove();
+		}
 	}
 
 	/* Remove the user from the Queue if they were on it. */
@@ -152,8 +155,7 @@ global.OnSnagged = function(data) {};
 /* ============== */
 /*  */
 /* ============== */
-global.OnUpdateVotes = function(data) {
-	/* If autobop is enabled, determine if the bot should autobop or not based on votes */
+global.OnUpdateVotes = function(data) { /* If autobop is enabled, determine if the bot should autobop or not based on votes */
 	if (useAutoBop) {
 		var percentAwesome = 0;
 		var percentLame = 0;
@@ -201,7 +203,7 @@ global.OnSpeak = function(data) {
 /* OnPmmed Event */
 /* ============== */
 global.OnPmmed = function(data) {
-	if (data.senderid != '4f471af5590ca24b6600145b'){
+	if (data.senderid != '4f471af5590ca24b6600145b') {
 		Command("pm", data);
 	}
 };
@@ -225,7 +227,6 @@ global.Command = function(source, data) {
 	if (source == "pm") {
 		pm = true;
 		requestedUser = data.senderid;
-		Log(allUsers);
 		requestedUserName = allUsers[requestedUser].name;
 	}
 
@@ -269,7 +270,7 @@ global.Command = function(source, data) {
 		}
 
 		/**** MODERATOR FUNCTIONS ****/
-/*else if (command == "a" || command == "awesome") {
+		/*else if (command == "a" || command == "awesome") {
 			if (IsMod(data.userid)) {
 				AwesomeSong();
 			}
@@ -389,9 +390,9 @@ global.LameSong = function(userid) {
 	queueActive = useQueue;
 };*/
 
-try{
+try {
 	require("./enableQueue.js");
-} catch (e){
+} catch (e) {
 	Log("Missing custom EnableQueue, loading default.");
 	require("./enableQueueDefault.js");
 }
@@ -440,6 +441,7 @@ global.NewDjFromQueue = function(data) {
 		if (djQueue.length > 0) {
 			if (data.user[0].userid != djQueue[0]) {
 				bot.remDj(data.user[0].userid);
+				Log(nextDj);
 				text = msgWrongQueuedDj.replace(/\{username\}/gi, allUsers[nextDj].name);
 				TellUser(data.user[0].userid, text);
 			} else {
