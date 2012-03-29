@@ -24,7 +24,7 @@ global.queueActive = false;
 global.djQueue = [ ];
 global.nextDj = null;
 global.nextDjTime = null;
-global.refreshInvalidId = null;
+global.refreshIntervalId = null;
 
 // Fields for the bot
 global.botVoted = false;

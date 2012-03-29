@@ -345,6 +345,7 @@ global.Command = function(source, data) {
 
 	/* Catch all for the morons that can't read. */
 	if (data.text == "q+") {
+		Log("Add to Queue");
 		AddToQueue(data);
 	}
 };
@@ -405,7 +406,6 @@ global.AddToQueue = function(data) {
 		if (djs.indexOf(data.userid) == -1) { /* Check if they are already on the queue*/
 			if (djQueue.indexOf(data.userid) == -1) {
 				djQueue.push(data.userid);
-
 				text = msgAddedToQueue.replace(/\{username\}/gi, data.name).replace(/\{queuesize\}/gi, djQueue.length);
 				TellUser(data.userid, text);
 				Log(djQueue);
