@@ -280,7 +280,7 @@ global.Command = function(source, data) {
 			}
 		}*/
 		else if (command == "realcount") {
-			if (IsMod(data.userid)) {
+			if (IsMod(requestedUser)) {
 				if (param === "") {
 					TellUser(requestedUser, "Usage: !realcount xxxxx");
 				} else {
