@@ -58,7 +58,9 @@ global.OnDeregistered = function(data) {
 	/* Remove the user from the cache */
 	if (data.user.length !== 0) {
 		for (var i = 0, len = data.user.length; i < len; ++i) {
-			allUsers[data.user[i].userid].Remove();
+			if (allUsers.indexOf(data.user[i].userid) != -1){
+				allUsers[data.user[i].userid].Remove();
+			}
 		}
 	}
 
