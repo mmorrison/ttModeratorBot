@@ -53,7 +53,6 @@ global.OnRegistered = function(data) {
 /* ============== */
 global.OnDeregistered = function(data) {
 	Log("Deregistered");
-	Log(data);
 
 	/* Remove the user from the cache */
 	if (data.user.length !== 0) {
@@ -61,6 +60,11 @@ global.OnDeregistered = function(data) {
 			try {
 				allUsers[data.user[i].userid].Remove();
 			} catch (e) {
+				Log("Deregister Error");
+				Log(e);
+				Log(i);
+				Log(data);
+				Log(allUsers);
 			}
 		}
 	}
