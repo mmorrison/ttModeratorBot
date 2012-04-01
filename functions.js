@@ -380,8 +380,10 @@ global.AwesomeSong = function(userid) {
 		bot.vote('up');
 		botVoted = true;
 	}
-}; /* ============== */
-/* AwesomeSong -  */
+}; 
+
+/* ============== */
+/* LameSong -  */
 /* ============== */
 global.LameSong = function(userid) {
 	if (!botVoted) {
@@ -445,8 +447,7 @@ global.NewDjFromQueue = function(data) {
 			if (data.user[0].userid != djQueue[0]) {
 				bot.remDj(data.user[0].userid);
 				Log(nextDj);
-				text = msgWrongQueuedDj.replace(/\{username\}/gi, allUsers[nextDj].name);
-				TellUser(data.user[0].userid, text);
+				text = msgWrongQueuedDj.replace(/\{username\}/gi, allUsers[nextDj].name);				TellUser(data.user[0].userid, text);
 			} else {
 				RemoveFromQueue(data.user[0].userid);
 				clearInterval(refreshIntervalId);
@@ -548,6 +549,7 @@ global.SetRealCount = function(param) {
 global.CheckAutoDj = function() {
 	if (useAutoDj) {
 		bot.roomInfo(function(data) {
+			bot.speak(data.room.metadata.djcount);
 			if (data.room.metadata.djcount <= (data.room.metadata.max_djs - 2)) {
 				if (!botOnTable) {
 					StepUp();
