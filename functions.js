@@ -15,6 +15,9 @@ global.Log = function(data) {
 global.OnReady = function(data) {
 	Log("Bot Ready");
 	bot.roomRegister(botRoomId);
+	if (useDB) {
+        setUpDatabase();
+    }
 };
 
 /* ============== */
@@ -32,6 +35,17 @@ global.OnRoomChanged = function(data) {
 
 	/* Check if the bot needs to step up to the table */
 	CheckAutoDj();
+	
+	//Adds all active users to the users table - updates lastseen if we've seen
+    //them before, adds a new entry if they're new or have changed their username
+    //since the last time we've seen them
+    if (useDB) {
+        for (i in users) {
+            if (users[i].name !== null) {
+                client.query('INSERT INTO ' + dbName + '.USER (userid, username, lastseen)' + 'VALUES (?, ?, NOW()) ON DUPLICATE KEY UPDATE lastseen = NOW()', [users[i].userid, users[i].name]);
+            }
+        }
+    }
 };
 
 /* ============== */
@@ -46,6 +60,13 @@ global.OnRegistered = function(data) {
 		var text = msgWelcome.replace(/\{username\}/gi, data.user[i].name);
 		TellUser(data.user[i].userid, text);
 	}
+	
+	//Add user to user table
+    if (useDB) {
+        if (user.name !== null) {
+            client.query('INSERT INTO ' + dbName + '.USER (userid, username, lastseen)' + 'VALUES (?, ?, NOW()) ON DUPLICATE KEY UPDATE lastseen = NOW()', [user.userid, user.name]);
+        }
+    }
 };
 
 /* ============== */
@@ -117,6 +138,9 @@ global.OnRemDJ = function(data) {
 global.OnNewSong = function(data) {
 	Log("New Song");
 
+	//Populate new song data in currentsong
+    PopulateSongData(data);
+
 	if (IsBot(data.room.metadata.current_dj)) {
 		botIsPlayingSong = true;
 		Log("Bot DJing");
@@ -143,6 +167,11 @@ global.OnNewSong = function(data) {
 global.OnEndSong = function(data) {
 	Log("End Song");
 
+	//Log song in DB
+    if (useDB) {
+        AddSongToDb();
+    }
+
 	if (IsBot(data.room.metadata.current_dj)) {
 		botIsPlayingSong = false;
 	}
@@ -162,7 +191,13 @@ global.OnSnagged = function(data) {};
 /* ============== */
 /*  */
 /* ============== */
-global.OnUpdateVotes = function(data) { /* If autobop is enabled, determine if the bot should autobop or not based on votes */
+global.OnUpdateVotes = function(data) {
+	//Update vote and listener count
+    currentsong.up = data.room.metadata.upvotes;
+    currentsong.down = data.room.metadata.downvotes;
+    currentsong.listeners = data.room.metadata.listeners;
+	
+	/* If autobop is enabled, determine if the bot should autobop or not based on votes */
 	if (useAutoBop) {
 		var percentAwesome = 0;
 		var percentLame = 0;
@@ -682,6 +717,59 @@ global.IsBot = function(userid) {
 global.Pause = function(ms) {
 	ms += new Date().getTime();
 	while (new Date() < ms) {}
+};
+
+
+global.PopulateSongData = function(data) {
+    currentsong.artist = data.room.metadata.current_song.metadata.artist;
+    currentsong.song = data.room.metadata.current_song.metadata.song;
+    currentsong.djname = data.room.metadata.current_song.djname;
+    currentsong.djid = data.room.metadata.current_song.djid;
+    currentsong.up = data.room.metadata.upvotes;
+    currentsong.down = data.room.metadata.downvotes;
+    currentsong.listeners = data.room.metadata.listeners;
+    currentsong.started = data.room.metadata.current_song.starttime;
+    currentsong.snags = 0;
+};
+
+global.AddSongToDb = function(data) {
+    client.query('INSERT INTO ' + dbName + '.SONG SET artist = ?,song = ?, djid = ?, up = ?, down = ?,' + 'listeners = ?, started = NOW(), snags = ?, bonus = ?', [currentsong.artist, currentsong.song, currentsong.djid, currentsong.up, currentsong.down, currentsong.listeners, currentsong.snags, 0]);
+};
+
+global.SetUpDatabase = function() {
+    //Creates DB and tables if needed, connects to db
+    client.query('CREATE DATABASE ' + dbName, function(error) {
+        if (error && error.number != mysql.ERROR_DB_CREATE_EXISTS) {
+            throw (error);
+        }
+    });
+    client.query('USE ' + dbName);
+
+    //song table
+    client.query('CREATE TABLE SONG(id INT(11) AUTO_INCREMENT PRIMARY KEY,' + ' artist VARCHAR(255),' + ' song VARCHAR(255),' + ' djid VARCHAR(255),' + ' up INT(3),' + ' down INT(3),' + ' listeners INT(3),' + ' started DATETIME,' + ' snags INT(3),' + ' bonus INT(3))',
+
+    function(error) {
+        //Handle an error if it's not a table already exists error
+        if (error && error.number != 1050) {
+            throw (error);
+        }
+    });
+
+    //chat table
+    client.query('CREATE TABLE CHAT(id INT(11) AUTO_INCREMENT PRIMARY KEY,' + ' userid VARCHAR(255),' + ' chat VARCHAR(255),' + ' time DATETIME)', function(error) {
+        //Handle an error if it's not a table already exists error
+        if (error && error.number != 1050) {
+            throw (error);
+        }
+    });
+
+    //user table
+    client.query('CREATE TABLE USER(userid VARCHAR(255), ' + 'username VARCHAR(255), ' + 'lastseen DATETIME, ' + 'PRIMARY KEY (userid, username))', function(error) {
+        //Handle an error if it's not a table already exists error
+        if (error && error.number != 1050) {
+            throw (error);
+        }
+    });
 };
 
 /* ============== */
