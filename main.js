@@ -2,14 +2,17 @@
 
 global.Functions = require("./functions.js");
 global.TTAPI = require("ttapi");
+global.client = null;
 
 if (useDB) {
-	global.Db = require("mysql");
+	global.mysql = require("mysql");
 
 	try {
-		client = mysql.createClient(dbLogin, dbPassword);
+		client = mysql.createClient({ user: dbLogin, password: dbPassword});
 	} catch (e) {
-		useDb = false;
+		useDB = false;
+		Log(e);
+		Log("DB Turned Off");
 	}
 }
 
