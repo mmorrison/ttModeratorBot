@@ -16,7 +16,7 @@ global.OnReady = function(data) {
 	Log("Bot Ready");
 	bot.roomRegister(botRoomId);
 	if (useDB) {
-        setUpDatabase();
+		SetUpDatabase();
     }
 };
 
