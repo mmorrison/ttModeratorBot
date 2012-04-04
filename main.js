@@ -35,6 +35,18 @@ global.botStepDownAfterSong = false;
 // Listener cache
 global.allUsers = {length: 0};
 
+//Current song info
+var currentsong = {
+    artist: null,
+    song: null,
+    djname: null,
+    djid: null,
+    up: 0,
+    down: 0,
+    listeners: 0,
+    snags: 0
+};
+
 Log("Done");
 
 Log("Hooking events");
