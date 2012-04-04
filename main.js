@@ -36,7 +36,7 @@ global.botStepDownAfterSong = false;
 global.allUsers = {length: 0};
 
 //Current song info
-var currentsong = {
+global.currentsong = {
     artist: null,
     song: null,
     djname: null,
