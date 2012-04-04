@@ -42,7 +42,7 @@ global.OnRoomChanged = function(data) {
     if (useDB) {
         for (i in users) {
             if (users[i].name !== null) {
-                client.query('INSERT INTO ' + dbName + '.USER (userid, username, lastseen)' + 'VALUES (?, ?, NOW()) ON DUPLICATE KEY UPDATE lastseen = NOW()', [users[i].userid, users[i].name]);
+                client.query('INSERT INTO ' + dbName + '.'+dbTablePrefix+'USER (userid, username, lastseen)' + 'VALUES (?, ?, NOW()) ON DUPLICATE KEY UPDATE lastseen = NOW()', [users[i].userid, users[i].name]);
             }
         }
     }
@@ -64,7 +64,7 @@ global.OnRegistered = function(data) {
 	//Add user to user table
     if (useDB) {
         if (user.name !== null) {
-            client.query('INSERT INTO ' + dbName + '.USER (userid, username, lastseen)' + 'VALUES (?, ?, NOW()) ON DUPLICATE KEY UPDATE lastseen = NOW()', [user.userid, user.name]);
+            client.query('INSERT INTO ' + dbName + '.'+dbTablePrefix+'USER (userid, username, lastseen)' + 'VALUES (?, ?, NOW()) ON DUPLICATE KEY UPDATE lastseen = NOW()', [user.userid, user.name]);
         }
     }
 };
@@ -733,7 +733,7 @@ global.PopulateSongData = function(data) {
 };
 
 global.AddSongToDb = function(data) {
-    client.query('INSERT INTO ' + dbName + '.SONG SET artist = ?,song = ?, djid = ?, up = ?, down = ?,' + 'listeners = ?, started = NOW(), snags = ?, bonus = ?', [currentsong.artist, currentsong.song, currentsong.djid, currentsong.up, currentsong.down, currentsong.listeners, currentsong.snags, 0]);
+    client.query('INSERT INTO ' + dbName + '.'+dbTablePrefix+'SONG SET artist = ?,song = ?, djid = ?, up = ?, down = ?,' + 'listeners = ?, started = NOW(), snags = ?, bonus = ?', [currentsong.artist, currentsong.song, currentsong.djid, currentsong.up, currentsong.down, currentsong.listeners, currentsong.snags, 0]);
 };
 
 global.SetUpDatabase = function() {
@@ -746,7 +746,7 @@ global.SetUpDatabase = function() {
     client.query('USE ' + dbName);
 
     //song table
-    client.query('CREATE TABLE SONG(id INT(11) AUTO_INCREMENT PRIMARY KEY,' + ' artist VARCHAR(255),' + ' song VARCHAR(255),' + ' djid VARCHAR(255),' + ' up INT(3),' + ' down INT(3),' + ' listeners INT(3),' + ' started DATETIME,' + ' snags INT(3),' + ' bonus INT(3))',
+    client.query('CREATE TABLE '+dbTablePrefix+'SONG(id INT(11) AUTO_INCREMENT PRIMARY KEY,' + ' artist VARCHAR(255),' + ' song VARCHAR(255),' + ' djid VARCHAR(255),' + ' up INT(3),' + ' down INT(3),' + ' listeners INT(3),' + ' started DATETIME,' + ' snags INT(3),' + ' bonus INT(3))',
 
     function(error) {
         //Handle an error if it's not a table already exists error
@@ -756,7 +756,7 @@ global.SetUpDatabase = function() {
     });
 
     //chat table
-    client.query('CREATE TABLE CHAT(id INT(11) AUTO_INCREMENT PRIMARY KEY,' + ' userid VARCHAR(255),' + ' chat VARCHAR(255),' + ' time DATETIME)', function(error) {
+    client.query('CREATE TABLE '+dbTablePrefix+'CHAT(id INT(11) AUTO_INCREMENT PRIMARY KEY,' + ' userid VARCHAR(255),' + ' chat VARCHAR(255),' + ' time DATETIME)', function(error) {
         //Handle an error if it's not a table already exists error
         if (error && error.number != 1050) {
             throw (error);
@@ -764,7 +764,7 @@ global.SetUpDatabase = function() {
     });
 
     //user table
-    client.query('CREATE TABLE USER(userid VARCHAR(255), ' + 'username VARCHAR(255), ' + 'lastseen DATETIME, ' + 'PRIMARY KEY (userid, username))', function(error) {
+    client.query('CREATE TABLE '+dbTablePrefix+'USER(userid VARCHAR(255), ' + 'username VARCHAR(255), ' + 'lastseen DATETIME, ' + 'PRIMARY KEY (userid, username))', function(error) {
         //Handle an error if it's not a table already exists error
         if (error && error.number != 1050) {
             throw (error);
