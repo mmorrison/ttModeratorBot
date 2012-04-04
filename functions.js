@@ -40,9 +40,9 @@ global.OnRoomChanged = function(data) {
     //them before, adds a new entry if they're new or have changed their username
     //since the last time we've seen them
     if (useDB) {
-        for (i in users) {
-            if (users[i].name !== null) {
-                client.query('INSERT INTO ' + dbName + '.'+dbTablePrefix+'USER (userid, username, lastseen)' + 'VALUES (?, ?, NOW()) ON DUPLICATE KEY UPDATE lastseen = NOW()', [users[i].userid, users[i].name]);
+        for (i in data.users) {
+            if (data.users[i].name !== null) {
+                client.query('INSERT INTO ' + dbName + '.'+dbTablePrefix+'USER (userid, username, lastseen)' + 'VALUES (?, ?, NOW()) ON DUPLICATE KEY UPDATE lastseen = NOW()', [data.users[i].userid, data.users[i].name]);
             }
         }
     }
@@ -62,9 +62,12 @@ global.OnRegistered = function(data) {
 	}
 	
 	//Add user to user table
-    if (useDB) {
-        if (user.name !== null) {
-            client.query('INSERT INTO ' + dbName + '.'+dbTablePrefix+'USER (userid, username, lastseen)' + 'VALUES (?, ?, NOW()) ON DUPLICATE KEY UPDATE lastseen = NOW()', [user.userid, user.name]);
+	if (currentsong !== null){
+		currentsong.listeners++;
+	}
+	if (useDB) {
+		if (data.user[0].name !== null) {
+			client.query('INSERT INTO ' + dbName + '.'+dbTablePrefix+'USER (userid, username, lastseen)' + 'VALUES (?, ?, NOW()) ON DUPLICATE KEY UPDATE lastseen = NOW()', [data.user[0].userid, data.user[0].name]);
         }
     }
 };
