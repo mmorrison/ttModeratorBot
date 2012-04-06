@@ -20,7 +20,9 @@ Log("Initializing");
 
 global.bot = new TTAPI(botAuthId, botUserId);
 global.djs = [ ];
+global.votedDjs = [ ];
 global.moderators = [ ];
+global.activeDj = null;
 
 // Fields for queue
 global.queueActive = false;
