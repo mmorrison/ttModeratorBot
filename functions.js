@@ -58,7 +58,7 @@ global.OnRegistered = function(data) {
 	if (!isOpen) {
 		if (data.user[0].userid !== '4f70aeda590ca2359e0023f0' && data.user[0].userid !== '4dfb57154fe7d061dd013a44	' && data.user[0].userid !== '4f458788590ca220fc0029fd') {
 			Log("Booted " + data.user[0].name);
-			bot.bootUser(data.user[0].userid, "Sorry, the campfire is out and the gate is closed. Please come again.");
+			bot.bootUser(data.user[0].userid, msgClosed);
 			return;
 		}
 	}
@@ -346,7 +346,7 @@ global.Command = function(source, data) {
 			TellUser(requestedUser, msgBugs);
 		} else if (command == "1ndone" || command == "1anddone") {
 			djMaxPlays = maxPlays;
-			Speak("We are doing doing 1 and done. You play one awesome song then you're booted. Be sure to join the queue by typing !q+");
+			Speak(msgOneAndDone);
 		} else if (command == "resetmaxplays" || command == "reset") {
 			djMaxPlays = djMaxPlays;
 			Speak("We have reset to max plays of " + maxPlays);
@@ -550,7 +550,9 @@ global.NewDjFromQueue = function(data) {
 global.NextDjOnQueue = function() {
 	if (queueActive && useQueue) {
 		if (djQueue.length > 0) {
-			var text = msgNextQueuedDj.replace(/\{username\}/gi, allUsers[djQueue[0]].name).replace(/\{timeout\}/gi, nextDjQueueTimeout);
+			var text = msgNextQueuedDj.
+						replace(/\{username\}/gi, allUsers[djQueue[0]].name).
+						replace(/\{timeout\}/gi, nextDjQueueTimeout);
 			Speak(text);
 			nextDj = djQueue[0];
 			nextDjTime = new Date();
@@ -598,9 +600,9 @@ global.CheckIfDjShouldBeRemoved = function(userid) {
 				allUsers[djs[i]].afkCount++;
 				if (allUsers[djs[i]].afkCount >= afkPlayCount) {
 					allUsers[djs[i]].RemoveDJ();
-					TellUser(djs[i], "I was forced to remove you as DJ because you didn't awesome songs.");
+					TellUser(djs[i], msgAFKBoot);
 				} else if (allUsers[djs[i]].afkCount >= 1) {
-					TellUser(djs[i], "If you continue to not awesome songs, I will be forced to remove you as DJ.");
+					TellUser(djs[i], msgAFKWarn);
 				}
 			} else {
 				allUsers[djs[i]].afkCount = 0;
