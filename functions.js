@@ -30,7 +30,7 @@ global.OnRoomChanged = function(data) {
 	RegisterUsers(data.users);
 	UpdateDjs();
 	CheckAutoDj();
-	
+
 	activeDj = data.room.metadata.current_dj;
 	Log(activeDj);
 
@@ -54,6 +54,15 @@ global.OnRoomChanged = function(data) {
 /* ============== */
 global.OnRegistered = function(data) {
 	Log("Registered");
+
+	if (!isOpen) {
+		if (data.user[0].userid !== '4f70aeda590ca2359e0023f0' && data.user[0].userid !== '4dfb57154fe7d061dd013a44	' && data.user[0].userid !== '4f458788590ca220fc0029fd') {
+			Log("Booted " + data.user[0].name);
+			bot.bootUser(data.user[0].userid, "Sorry, the campfire is out and the gate is closed. Please come again.");
+			return;
+		}
+	}
+
 	if (data.user.length === 0) return;
 	for (var i = 0; i < data.user.length; ++i) { /* Add to the cached user list */
 		allUsers[data.user[i].userid] = BaseUser().extend(data.user[i]);
@@ -131,8 +140,9 @@ global.OnRemDJ = function(data) {
 	/*if (!IsBot(data.user[0].userid)) {
 		StepDown();
 	} */
-	
+
 	allUsers[data.user[0].userid].songCount = 0;
+	allUsers[data.user[0].userid].afkCount = 0;
 
 	UpdateDjs();
 
@@ -150,14 +160,15 @@ global.OnNewSong = function(data) {
 
 	//Populate new song data in currentsong
 	PopulateSongData(data);
-	Log(activeDj);
+	Log("Old DJ: " + activeDj);
 
 	/* Check if the Dj has played their set */
-	if (activeDj !== null){
+	if (activeDj !== null) {
 		CheckIfDjShouldBeRemoved(activeDj);
 	}
 
 	activeDj = data.room.metadata.current_dj;
+	Log("New DJ: " + activeDj);
 
 	if (IsBot(activeDj)) {
 		botIsPlayingSong = true;
@@ -291,7 +302,7 @@ global.Command = function(source, data) {
 	if (source == "pm") {
 		pm = true;
 		requestedUser = data.senderid;
-		requestedUserName = allUsers[requestedUser].name;
+		//requestedUserName = allUsers[requestedUser].name;
 	}
 
 	if (result) {
@@ -301,6 +312,8 @@ global.Command = function(source, data) {
 		if (result.length == 3 && result[2]) {
 			param = result[2].trim().toLowerCase();
 		}
+
+		Log("Command: " + command + " | Param: " + param);
 
 		if (command == "q+") {
 			AddToQueue(data);
@@ -331,6 +344,12 @@ global.Command = function(source, data) {
 			SpeakPlayCount();
 		} else if (command == "issue" || command == "bug" || command == "feature" || command == "idea") {
 			TellUser(requestedUser, msgBugs);
+		} else if (command == "1ndone" || command == "1anddone") {
+			djMaxPlays = maxPlays;
+			Speak("We are doing doing 1 and done. You play one awesome song then you're booted. Be sure to join the queue by typing !q+");
+		} else if (command == "resetmaxplays" || command == "reset") {
+			djMaxPlays = djMaxPlays;
+			Speak("We have reset to max plays of " + maxPlays);
 		}
 
 		/**** MODERATOR FUNCTIONS ****/
@@ -373,13 +392,23 @@ global.Command = function(source, data) {
 					TellUser(requestedUser, "Usage: !autobop true or false. Currently it is set to " + useAutoBop);
 				}
 			}
+		} else if (command == "open" && pm) {
+			if (IsMod(requestedUser)) {
+				isOpen = true;
+				TellUser(requestedUser, "Open is set to " + isOpen);
+			}
+		} else if (command == "close" && pm) {
+			if (IsMod(requestedUser)) {
+				isOpen = false;
+				TellUser(requestedUser, "Open is set to " + isOpen);
+			}
 		} else if (command == "consolelog" && pm) {
 			if (IsMod(requestedUser)) {
 				if (param == "true" || param == "false") {
 					logtoconsole = param;
-					TellUser(data.userid, "Auto DJ set to " + logtoconsole);
+					TellUser(requestedUser, "Auto DJ set to " + logtoconsole);
 				} else {
-					TellUser(data.userid, "Usage: !consolelog true or false. Currently it is set to " + logtoconsole);
+					TellUser(requestedUser, "Usage: !consolelog true or false. Currently it is set to " + logtoconsole);
 				}
 			}
 		} else if (command == "setlaptop" && pm) {
@@ -562,6 +591,23 @@ global.QueueStatus = function() { /**/
 /* CheckIfDjShouldBeRemoved */
 /* ============== */
 global.CheckIfDjShouldBeRemoved = function(userid) {
+
+	for (var i = 0; i < djs.length; i++) {
+		if (activeDj != djs[i] && !IsBot(djs[i])) {
+			if (votedDjs.indexOf(djs[i]) == -1) {
+				allUsers[djs[i]].afkCount++;
+				if (allUsers[djs[i]].afkCount >= afkPlayCount) {
+					allUsers[djs[i]].RemoveDJ();
+					TellUser(djs[i], "I was forced to remove you as DJ because you didn't awesome songs.");
+				} else if (allUsers[djs[i]].afkCount >= 1) {
+					TellUser(djs[i], "If you continue to not awesome songs, I will be forced to remove you as DJ.");
+				}
+			} else {
+				allUsers[djs[i]].afkCount = 0;
+			}
+		}
+	}
+
 	if (allUsers[userid].songCount >= djMaxPlays && djMaxPlays !== 0 && !IsBot(userid)) {
 		allUsers[userid].RemoveDJ();
 		Speak(msgLastSong.replace(/\{username\}/gi, allUsers[userid].name));
