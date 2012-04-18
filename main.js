@@ -23,7 +23,6 @@ global.djs = [ ];
 global.votedDjs = [ ];
 global.moderators = [ ];
 global.activeDj = null;
-global.isOpen = false;
 global.djMaxPlays = maxPlays;
 
 // Fields for queue

@@ -55,14 +55,6 @@ global.OnRoomChanged = function(data) {
 global.OnRegistered = function(data) {
 	Log("Registered");
 
-	if (!isOpen) {
-		if (data.user[0].userid !== '4f70aeda590ca2359e0023f0' && data.user[0].userid !== '4dfb57154fe7d061dd013a44	' && data.user[0].userid !== '4f458788590ca220fc0029fd') {
-			Log("Booted " + data.user[0].name);
-			bot.bootUser(data.user[0].userid, msgClosed);
-			return;
-		}
-	}
-
 	if (data.user.length === 0) return;
 	for (var i = 0; i < data.user.length; ++i) { /* Add to the cached user list */
 		allUsers[data.user[i].userid] = BaseUser().extend(data.user[i]);
@@ -392,17 +384,7 @@ global.Command = function(source, data) {
 					TellUser(requestedUser, "Usage: !autobop true or false. Currently it is set to " + useAutoBop);
 				}
 			}
-		} else if (command == "open" && pm) {
-			if (IsMod(requestedUser)) {
-				isOpen = true;
-				TellUser(requestedUser, "Open is set to " + isOpen);
-			}
-		} else if (command == "close" && pm) {
-			if (IsMod(requestedUser)) {
-				isOpen = false;
-				TellUser(requestedUser, "Open is set to " + isOpen);
-			}
-		} else if (command == "consolelog" && pm) {
+		}  else if (command == "consolelog" && pm) {
 			if (IsMod(requestedUser)) {
 				if (param == "true" || param == "false") {
 					logtoconsole = param;
@@ -427,7 +409,12 @@ global.Command = function(source, data) {
 					bot.setAvatar(param);
 				}
 			}
-		} else if (command == "addsong") {
+		} else if (command == "kill" && pm) {
+			if (IsMod(requestedUser)) {
+				bot.roomDeregister();
+        		process.exit(0);
+			}
+		}else if (command == "addsong") {
 			AddSong(requestedUser);
 		}
 
@@ -532,6 +519,9 @@ global.NewDjFromQueue = function(data) {
 		if (djQueue.length > 0) {
 			if (data.user[0].userid != djQueue[0]) {
 				bot.remDj(data.user[0].userid);
+				if (nextDj == null || nextDj == ""){
+					nextDj = djQueue[0];
+				}
 				Log(nextDj);
 				text = msgWrongQueuedDj.replace(/\{username\}/gi, allUsers[nextDj].name);
 				TellUser(data.user[0].userid, text);
