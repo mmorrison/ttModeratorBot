@@ -38,6 +38,17 @@ global.botOnTable = false;
 global.botIsPlayingSong = false;
 global.botStepDownAfterSong = false;
 
+// Fields for voting
+var acceptingVotes = false;
+var incomingVotes = {
+    One: 0,
+    Two: 0,
+    Three: 0,
+    Four: 0,
+    Five: 0
+};
+var voteStart = null;
+
 // Listener cache
 global.allUsers = {length: 0};
 

@@ -18,6 +18,24 @@ global.OnReady = function(data) {
 	if (useDB) {
 		SetUpDatabase();
 	}
+
+	// http://nodejs.org/api.html#_child_processes
+	var sys = require('util');
+	var exec = require('child_process').exec;
+	var child;
+
+	/* Sends me a message every time Uglee reboots */
+	child = exec("t set active GilimYurhig", function(error, stdout, stderr) {
+		if (error !== null) {
+			console.log('exec error: ' + error);
+		}
+
+		child = exec("t update 'd @mikewills This is Kindergarden Cop, I rebooted for you!'", function(error, stdout, stderr) {
+			if (error !== null) {
+				console.log('exec error: ' + error);
+			}
+		});
+	});
 };
 
 /* ============== */
@@ -25,6 +43,8 @@ global.OnReady = function(data) {
 /* ============== */
 global.OnRoomChanged = function(data) {
 	Log("Room Changed");
+
+	bot.modifyName(botName);
 
 	// Register all of the users in the room.
 	RegisterUsers(data.users);
@@ -195,6 +215,7 @@ global.OnEndSong = function(data) {
 
 	if (IsBot(data.room.metadata.current_dj)) {
 		botIsPlayingSong = false;
+		VoteNextSong();
 	}
 
 	/* Reset bot details */
@@ -354,6 +375,11 @@ global.Command = function(source, data) {
 				LameSong();
 			}
 		}*/
+		else if (command == "votenext"){
+			if (IsMod(requestedUser)) {
+				VoteNextSong();
+            }
+        }
 		else if (command == "realcount") {
 			if (IsMod(requestedUser)) {
 				if (param === "") {
@@ -384,7 +410,7 @@ global.Command = function(source, data) {
 					TellUser(requestedUser, "Usage: !autobop true or false. Currently it is set to " + useAutoBop);
 				}
 			}
-		}  else if (command == "consolelog" && pm) {
+		} else if (command == "consolelog" && pm) {
 			if (IsMod(requestedUser)) {
 				if (param == "true" || param == "false") {
 					logtoconsole = param;
@@ -412,9 +438,9 @@ global.Command = function(source, data) {
 		} else if (command == "kill" && pm) {
 			if (IsMod(requestedUser)) {
 				bot.roomDeregister();
-        		process.exit(0);
+				process.exit(0);
 			}
-		}else if (command == "addsong") {
+		} else if (command == "addsong") {
 			AddSong(requestedUser);
 		}
 
@@ -425,9 +451,15 @@ global.Command = function(source, data) {
 	}
 
 	/* Catch all for the morons that can't read. */
-	if (data.text == "q+") {
-		Log("Add to Queue");
-		AddToQueue(data);
+	if (data.text == "q+" || data.text == "addme" || data.text.match(/^\/addme$/) || data.text.match(/^\/a$/) || data.text.match(/^\!a$/) || data.text.match(/^\/q$/)) {
+			Log("Add to Queue via wrong command: " + data.text);
+			AddToQueue(data);
+			Speak("Please next time use the offical command: !q+");
+		}
+
+	/* Used for voting */
+	if (data.text == "1" || data.text == "2" || data.text == "3" || data.text == "4" || data.text == "5"){
+		ProcessVote(data.text);
 	}
 };
 
@@ -519,7 +551,7 @@ global.NewDjFromQueue = function(data) {
 		if (djQueue.length > 0) {
 			if (data.user[0].userid != djQueue[0]) {
 				bot.remDj(data.user[0].userid);
-				if (nextDj == null || nextDj == ""){
+				if (nextDj === null || nextDj === "") {
 					nextDj = djQueue[0];
 				}
 				Log(nextDj);
@@ -541,8 +573,8 @@ global.NextDjOnQueue = function() {
 	if (queueActive && useQueue) {
 		if (djQueue.length > 0) {
 			var text = msgNextQueuedDj.
-						replace(/\{username\}/gi, allUsers[djQueue[0]].name).
-						replace(/\{timeout\}/gi, nextDjQueueTimeout);
+			replace(/\{username\}/gi, allUsers[djQueue[0]].name).
+			replace(/\{timeout\}/gi, nextDjQueueTimeout);
 			Speak(text);
 			nextDj = djQueue[0];
 			nextDjTime = new Date();
@@ -704,6 +736,92 @@ global.AddSong = function(userid) {
 	} else {
 		Log("Not mod on add");
 	}
+};
+
+/* ============== */
+/* VoteNextSong - have the users vote for the next song */
+/* ============== */
+global.VoteNextSong =  function() {
+    Speak("I want you to vote what song I should play next! Your choices are: ");
+    incomingVotes = {
+        One: 0,
+        Two: 0,
+        Three: 0,
+        Four: 0,
+        Five: 0
+    };
+    bot.playlistAll(function(data) {
+        var options = "";
+        for (var i = 0; i <= data.list.length && i <= 4; i++) {
+            options += "[" + (i + 1) + "] " + data.list[i].metadata.song + " by " + data.list[i].metadata.artist + "\n";
+        }
+        Speak(options);
+        //console.log(options);
+        Pause(500);
+        Speak("Type in your choice by typing in the ther number next to the song. Voting is open for 1 minute.");
+        acceptingVotes = true;
+        voteStart = new Date();
+        refreshIntervalId = setInterval(VotingEnded, 10000);
+    });
+};
+
+/* ============== */
+/* ProcessVote - have the users vote for the next song */
+/* ============== */
+global.ProcessVote = function(vote) {
+    if (acceptingVotes) {
+        if (vote == "1") {
+            incomingVotes.One++;
+        } else if (vote == "2") {
+            incomingVotes.Two++;
+        } else if (vote == "3") {
+            incomingVotes.Three++;
+        } else if (vote == "4") {
+            incomingVotes.Four++;
+        } else if (vote == "5") {
+            incomingVotes.Five++;
+        }
+        console.log(incomingVotes);
+    }
+};
+
+/* ============== */
+/* VotingEnded - have the users vote for the next song */
+/* ============== */
+global.VotingEnded = function() {
+    var currentTime = new Date();
+    if (currentTime.getTime() - voteStart.getTime() >= (60000)) {
+        acceptingVotes = false;
+        clearInterval(refreshIntervalId);
+
+        var topVote = 1;
+        var topVoteCount = incomingVotes.One;
+
+        if (incomingVotes.Two > topVoteCount) {
+            topVote = 2;
+            topVoteCount = incomingVotes.Two;
+        }
+
+        if (incomingVotes.Three > topVoteCount) {
+            topVote = 3;
+            topVoteCount = incomingVotes.Three;
+        }
+
+        if (incomingVotes.Four > topVoteCount) {
+            topVote = 4;
+            topVoteCount = incomingVotes.Four;
+        }
+
+        if (incomingVotes.Five > topVoteCount) {
+            topVote = 5;
+            topVoteCount = incomingVotes.Five;
+        }
+        console.log("Vote " + topVote + " wins!");
+        Speak("Voting is now closed. I have the most requested song up next.");
+        var winner = topVote - 1;
+        console.log(winner);
+        bot.playlistReorder(winner, 0, function() {});
+    }
 };
 
 /* ============== */
@@ -875,7 +993,7 @@ BaseUser = function() {
 			bot.bootUser(this.userid, pReason ? pReason : "");
 		},
 		IsiOS: function() {
-			return this.laptop === "iphone";
+			return this.laptop === "iphone" || this.laptop === "android";
 		},
 		IsBot: function() {
 			return this.userid == botUserId;
