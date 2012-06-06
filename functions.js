@@ -363,6 +363,10 @@ global.Command = function(source, data) {
 		} else if (command == "resetmaxplays" || command == "reset") {
 			djMaxPlays = djMaxPlays;
 			Speak("We have reset to max plays of " + maxPlays);
+		} else if (command == "goplay") {
+			if (IsMod(requestedUser)) {
+				GoPlay();
+			}
 		}
 
 		/**** MODERATOR FUNCTIONS ****/
@@ -375,12 +379,11 @@ global.Command = function(source, data) {
 				LameSong();
 			}
 		}*/
-		else if (command == "votenext"){
+		else if (command == "votenext") {
 			if (IsMod(requestedUser)) {
 				VoteNextSong();
-            }
-        }
-		else if (command == "realcount") {
+			}
+		} else if (command == "realcount") {
 			if (IsMod(requestedUser)) {
 				if (param === "") {
 					TellUser(requestedUser, "Usage: !realcount xxxxx");
@@ -452,13 +455,13 @@ global.Command = function(source, data) {
 
 	/* Catch all for the morons that can't read. */
 	if (data.text == "q+" || data.text == "addme" || data.text.match(/^\/addme$/) || data.text.match(/^\/a$/) || data.text.match(/^\!a$/) || data.text.match(/^\/q$/)) {
-			Log("Add to Queue via wrong command: " + data.text);
-			AddToQueue(data);
-			Speak("Please next time use the offical command: !q+");
-		}
+		Log("Add to Queue via wrong command: " + data.text);
+		AddToQueue(data);
+		Speak("Please next time use the offical command: !q+");
+	}
 
 	/* Used for voting */
-	if (data.text == "1" || data.text == "2" || data.text == "3" || data.text == "4" || data.text == "5"){
+	if (data.text == "1" || data.text == "2" || data.text == "3" || data.text == "4" || data.text == "5") {
 		ProcessVote(data.text);
 	}
 };
@@ -615,19 +618,20 @@ global.QueueStatus = function() { /**/
 /* CheckIfDjShouldBeRemoved */
 /* ============== */
 global.CheckIfDjShouldBeRemoved = function(userid) {
-
-	for (var i = 0; i < djs.length; i++) {
-		if (activeDj != djs[i] && !IsBot(djs[i])) {
-			if (votedDjs.indexOf(djs[i]) == -1) {
-				allUsers[djs[i]].afkCount++;
-				if (allUsers[djs[i]].afkCount >= afkPlayCount) {
-					allUsers[djs[i]].RemoveDJ();
-					TellUser(djs[i], msgAFKBoot);
-				} else if (allUsers[djs[i]].afkCount >= 1) {
-					TellUser(djs[i], msgAFKWarn);
+	if (!justLoaded) {
+		for (var i = 0; i < djs.length; i++) {
+			if (activeDj != djs[i] && !IsBot(djs[i])) {
+				if (votedDjs.indexOf(djs[i]) == -1) {
+					allUsers[djs[i]].afkCount++;
+					if (allUsers[djs[i]].afkCount >= afkPlayCount) {
+						allUsers[djs[i]].RemoveDJ();
+						TellUser(djs[i], msgAFKBoot);
+					} else if (allUsers[djs[i]].afkCount >= 1) {
+						TellUser(djs[i], msgAFKWarn);
+					}
+				} else {
+					allUsers[djs[i]].afkCount = 0;
 				}
-			} else {
-				allUsers[djs[i]].afkCount = 0;
 			}
 		}
 	}
@@ -640,6 +644,8 @@ global.CheckIfDjShouldBeRemoved = function(userid) {
 		allUsers[userid].RemoveDJ();
 		botStepDownAfterSong = false;
 	}
+
+	justLoaded = false;
 };
 
 /* ============== */
@@ -741,87 +747,87 @@ global.AddSong = function(userid) {
 /* ============== */
 /* VoteNextSong - have the users vote for the next song */
 /* ============== */
-global.VoteNextSong =  function() {
-    Speak("I want you to vote what song I should play next! Your choices are: ");
-    incomingVotes = {
-        One: 0,
-        Two: 0,
-        Three: 0,
-        Four: 0,
-        Five: 0
-    };
-    bot.playlistAll(function(data) {
-        var options = "";
-        for (var i = 0; i <= data.list.length && i <= 4; i++) {
-            options += "[" + (i + 1) + "] " + data.list[i].metadata.song + " by " + data.list[i].metadata.artist + "\n";
-        }
-        Speak(options);
-        //console.log(options);
-        Pause(500);
-        Speak("Type in your choice by typing in the ther number next to the song. Voting is open for 1 minute.");
-        acceptingVotes = true;
-        voteStart = new Date();
-        refreshIntervalId = setInterval(VotingEnded, 10000);
-    });
+global.VoteNextSong = function() {
+	Speak("I want you to vote what song I should play next! Your choices are: ");
+	incomingVotes = {
+		One: 0,
+		Two: 0,
+		Three: 0,
+		Four: 0,
+		Five: 0
+	};
+	bot.playlistAll(function(data) {
+		var options = "";
+		for (var i = 0; i <= data.list.length && i <= 4; i++) {
+			options += "[" + (i + 1) + "] " + data.list[i].metadata.song + " by " + data.list[i].metadata.artist + "\n";
+		}
+		Speak(options);
+		//console.log(options);
+		Pause(500);
+		Speak("Type in your choice by typing in the ther number next to the song. Voting is open for 1 minute.");
+		acceptingVotes = true;
+		voteStart = new Date();
+		refreshIntervalId = setInterval(VotingEnded, 10000);
+	});
 };
 
 /* ============== */
 /* ProcessVote - have the users vote for the next song */
 /* ============== */
 global.ProcessVote = function(vote) {
-    if (acceptingVotes) {
-        if (vote == "1") {
-            incomingVotes.One++;
-        } else if (vote == "2") {
-            incomingVotes.Two++;
-        } else if (vote == "3") {
-            incomingVotes.Three++;
-        } else if (vote == "4") {
-            incomingVotes.Four++;
-        } else if (vote == "5") {
-            incomingVotes.Five++;
-        }
-        console.log(incomingVotes);
-    }
+	if (acceptingVotes) {
+		if (vote == "1") {
+			incomingVotes.One++;
+		} else if (vote == "2") {
+			incomingVotes.Two++;
+		} else if (vote == "3") {
+			incomingVotes.Three++;
+		} else if (vote == "4") {
+			incomingVotes.Four++;
+		} else if (vote == "5") {
+			incomingVotes.Five++;
+		}
+		console.log(incomingVotes);
+	}
 };
 
 /* ============== */
 /* VotingEnded - have the users vote for the next song */
 /* ============== */
 global.VotingEnded = function() {
-    var currentTime = new Date();
-    if (currentTime.getTime() - voteStart.getTime() >= (60000)) {
-        acceptingVotes = false;
-        clearInterval(refreshIntervalId);
+	var currentTime = new Date();
+	if (currentTime.getTime() - voteStart.getTime() >= (60000)) {
+		acceptingVotes = false;
+		clearInterval(refreshIntervalId);
 
-        var topVote = 1;
-        var topVoteCount = incomingVotes.One;
+		var topVote = 1;
+		var topVoteCount = incomingVotes.One;
 
-        if (incomingVotes.Two > topVoteCount) {
-            topVote = 2;
-            topVoteCount = incomingVotes.Two;
-        }
+		if (incomingVotes.Two > topVoteCount) {
+			topVote = 2;
+			topVoteCount = incomingVotes.Two;
+		}
 
-        if (incomingVotes.Three > topVoteCount) {
-            topVote = 3;
-            topVoteCount = incomingVotes.Three;
-        }
+		if (incomingVotes.Three > topVoteCount) {
+			topVote = 3;
+			topVoteCount = incomingVotes.Three;
+		}
 
-        if (incomingVotes.Four > topVoteCount) {
-            topVote = 4;
-            topVoteCount = incomingVotes.Four;
-        }
+		if (incomingVotes.Four > topVoteCount) {
+			topVote = 4;
+			topVoteCount = incomingVotes.Four;
+		}
 
-        if (incomingVotes.Five > topVoteCount) {
-            topVote = 5;
-            topVoteCount = incomingVotes.Five;
-        }
-        console.log("Vote " + topVote + " wins!");
-        Speak("Voting is now closed. I have the most requested song up next.");
-        var winner = topVote - 1;
-        console.log(winner);
-        bot.playlistReorder(winner, 0, function() {});
-    }
+		if (incomingVotes.Five > topVoteCount) {
+			topVote = 5;
+			topVoteCount = incomingVotes.Five;
+		}
+		console.log("Vote " + topVote + " wins!");
+		Speak("Voting is now closed. I have the most requested song up next.");
+		var winner = topVote - 1;
+		console.log(winner);
+		bot.playlistReorder(winner, 0, function() {});
+	}
 };
 
 /* ============== */
@@ -913,6 +919,20 @@ global.PopulateSongData = function(data) {
 	currentsong.started = data.room.metadata.current_song.starttime;
 	currentsong.snags = 0;
 };
+
+var GoPlay = function() {
+		child = exec("cd /home/mikewills/", function(error, stdout, stderr) {
+			if (error !== null) {
+				console.log('exec error: ' + error);
+			}
+
+			child = exec("./uglee.sh", function(error, stdout, stderr) {
+				if (error !== null) {
+					console.log('exec error: ' + error);
+				}
+			});
+		});
+	};
 
 global.AddSongToDb = function(data) {
 	client.query('INSERT INTO ' + dbName + '.' + dbTablePrefix + 'SONG SET artist = ?,song = ?, djid = ?, up = ?, down = ?,' + 'listeners = ?, started = NOW(), snags = ?, bonus = ?', [currentsong.artist, currentsong.song, currentsong.djid, currentsong.up, currentsong.down, currentsong.listeners, currentsong.snags, 0]);

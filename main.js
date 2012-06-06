@@ -31,6 +31,7 @@ global.djQueue = [ ];
 global.nextDj = null;
 global.nextDjTime = null;
 global.refreshIntervalId = null;
+global.justLoaded = true;
 
 // Fields for the bot
 global.botVoted = false;
@@ -39,15 +40,15 @@ global.botIsPlayingSong = false;
 global.botStepDownAfterSong = false;
 
 // Fields for voting
-var acceptingVotes = false;
-var incomingVotes = {
+global.acceptingVotes = false;
+global.incomingVotes = {
     One: 0,
     Two: 0,
     Three: 0,
     Four: 0,
     Five: 0
 };
-var voteStart = null;
+global.voteStart = null;
 
 // Listener cache
 global.allUsers = {length: 0};
