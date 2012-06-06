@@ -446,10 +446,13 @@ global.Command = function(source, data) {
 		} else if (command == "addsong") {
 			AddSong(requestedUser);
 		}
-
-		/* Catch all */
-		else {
-			Speak("Unknown Command");
+		if (useDB) {
+			require("./stats.js");
+			var response = RunStats(command, param, data, function(response) {
+				if (response !== null) {
+					Speak(response);
+				}
+			});
 		}
 	}
 
