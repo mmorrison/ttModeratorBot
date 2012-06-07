@@ -14,6 +14,7 @@ global.Log = function(data) {
 /* ============== */
 global.OnReady = function(data) {
 	Log("Bot Ready");
+	try {
 	bot.roomRegister(botRoomId);
 	if (useDB) {
 		SetUpDatabase();
@@ -36,12 +37,17 @@ global.OnReady = function(data) {
 			}
 		});
 	});
+	} catch (e) {
+		Log("*** ERROR *** " + e);
+	}
 };
 
 /* ============== */
 /* OnRoomChanged Event */
 /* ============== */
 global.OnRoomChanged = function(data) {
+
+	try {
 	Log("Room Changed");
 
 	bot.modifyName(botName);
@@ -67,6 +73,9 @@ global.OnRoomChanged = function(data) {
 			}
 		}
 	}
+	} catch (e) {
+		Log("*** ERROR *** " + e);
+	}
 };
 
 /* ============== */
@@ -74,6 +83,8 @@ global.OnRoomChanged = function(data) {
 /* ============== */
 global.OnRegistered = function(data) {
 	Log("Registered");
+
+	try {
 
 	if (data.user.length === 0) return;
 	for (var i = 0; i < data.user.length; ++i) { /* Add to the cached user list */
@@ -92,6 +103,9 @@ global.OnRegistered = function(data) {
 			client.query('INSERT INTO ' + dbName + '.' + dbTablePrefix + 'USER (userid, username, lastseen)' + 'VALUES (?, ?, NOW()) ON DUPLICATE KEY UPDATE lastseen = NOW()', [data.user[0].userid, data.user[0].name]);
 		}
 	}
+	} catch (e) {
+		Log("*** ERROR *** " + e);
+	}
 };
 
 /* ============== */
@@ -99,6 +113,8 @@ global.OnRegistered = function(data) {
 /* ============== */
 global.OnDeregistered = function(data) {
 	Log("Deregistered");
+
+	try {
 
 	/* Remove the user from the cache */
 	if (data.user.length !== 0) {
@@ -116,7 +132,10 @@ global.OnDeregistered = function(data) {
 	}
 
 	/* Remove the user from the Queue if they were on it. */
-	RemoveFromQueue(data.user[0].userid);
+	/* RemoveFromQueue(data.user[0].userid); */
+	} catch (e) {
+		Log("*** ERROR *** " + e);
+	}
 };
 
 /* ============== */
@@ -135,12 +154,16 @@ global.OnRemModerator = function(data) {};
 global.OnAddDJ = function(data) {
 	Log("Add DJ");
 
+	try {
 	UpdateDjs();
 
 	CheckAutoDj();
 
 	/* Check if they are from the queue if there is one */
 	NewDjFromQueue(data);
+	} catch (e) {
+		Log("*** ERROR *** " + e);
+	}
 };
 
 /* ============== */
@@ -148,6 +171,8 @@ global.OnAddDJ = function(data) {
 /* ============== */
 global.OnRemDJ = function(data) {
 	Log("Remove DJ");
+
+	try {
 
 	/*if (!IsBot(data.user[0].userid)) {
 		StepDown();
@@ -162,6 +187,9 @@ global.OnRemDJ = function(data) {
 
 	/* Notify the next DJ on the list */
 	NextDjOnQueue();
+	} catch (e) {
+		Log("*** ERROR *** " + e);
+	}
 };
 
 /* ============== */
@@ -169,6 +197,8 @@ global.OnRemDJ = function(data) {
 /* ============== */
 global.OnNewSong = function(data) {
 	Log("New Song");
+
+	try {
 
 	//Populate new song data in currentsong
 	PopulateSongData(data);
@@ -200,6 +230,9 @@ global.OnNewSong = function(data) {
 	if (botOnTable) {
 		AwesomeSong();
 	}
+	} catch (e) {
+		Log("*** ERROR *** " + e);
+	}
 };
 
 /* ============== */
@@ -208,6 +241,8 @@ global.OnNewSong = function(data) {
 global.OnEndSong = function(data) {
 	Log("End Song");
 
+
+	try {
 	//Log song in DB
 	if (useDB) {
 		AddSongToDb();
@@ -220,6 +255,9 @@ global.OnEndSong = function(data) {
 
 	/* Reset bot details */
 	botVoted = false;
+	} catch (e) {
+		Log("*** ERROR *** " + e);
+	}
 };
 
 /* ============== */
@@ -231,6 +269,7 @@ global.OnSnagged = function(data) {};
 /*  */
 /* ============== */
 global.OnUpdateVotes = function(data) {
+	try {
 	//Update vote and listener count
 	currentsong.up = data.room.metadata.upvotes;
 	currentsong.down = data.room.metadata.downvotes;
@@ -262,6 +301,9 @@ global.OnUpdateVotes = function(data) {
 		if ((percentLame - percentAwesome) > 25) {
 			LameSong();
 		}
+	}
+	} catch (e) {
+		Log("*** ERROR *** " + e);
 	}
 };
 
@@ -300,6 +342,7 @@ global.OnPmmed = function(data) {
 /* Command - Processes all spoken commands */
 /* ============== */
 global.Command = function(source, data) {
+	try {
 	var text = "";
 	var pm = false;
 	var speak = false; /* First break apart the comand */
@@ -467,6 +510,9 @@ global.Command = function(source, data) {
 	if (data.text == "1" || data.text == "2" || data.text == "3" || data.text == "4" || data.text == "5") {
 		ProcessVote(data.text);
 	}
+	} catch (e) {
+		Log("*** ERROR *** " + e);
+	}
 };
 
 /* ============== */
@@ -599,6 +645,7 @@ global.CheckForNextDjFromQueue = function() {
 		var currentTime = new Date();
 		if (currentTime.getTime() - nextDjTime.getTime() > (nextDjQueueTimeout * 1000)) {
 			RemoveFromQueue(nextDj);
+			djQueue.push(nextDj);
 			clearInterval(refreshIntervalId);
 			NextDjOnQueue();
 		}
