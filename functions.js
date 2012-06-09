@@ -31,7 +31,7 @@ global.OnReady = function(data) {
 			console.log('exec error: ' + error);
 		}
 
-		child = exec("t update 'd @mikewills This is Kindergarden Cop, I rebooted for you!'", function(error, stdout, stderr) {
+		child = exec("t update 'd @mikewills This is " + botName + ", I rebooted for you!'", function(error, stdout, stderr) {
 			if (error !== null) {
 				console.log('exec error: ' + error);
 			}

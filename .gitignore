@@ -8,3 +8,7 @@ nohup.out
 startMAW.sh
 amm.js
 ammfs.js
+hh.js
+noodles.js
+*.err.log
+*.out.log
