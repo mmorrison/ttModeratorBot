@@ -15,28 +15,28 @@ global.Log = function(data) {
 global.OnReady = function(data) {
 	Log("Bot Ready");
 	try {
-	bot.roomRegister(botRoomId);
-	if (useDB) {
-		SetUpDatabase();
-	}
-
-	// http://nodejs.org/api.html#_child_processes
-	var sys = require('util');
-	var exec = require('child_process').exec;
-	var child;
-
-	/* Sends me a message every time Uglee reboots */
-	child = exec("t set active GilimYurhig", function(error, stdout, stderr) {
-		if (error !== null) {
-			console.log('exec error: ' + error);
+		bot.roomRegister(botRoomId);
+		if (useDB) {
+			SetUpDatabase();
 		}
 
-		child = exec("t update 'd @mikewills This is " + botName + ", I rebooted for you!'", function(error, stdout, stderr) {
+		// http://nodejs.org/api.html#_child_processes
+		var sys = require('util');
+		var exec = require('child_process').exec;
+		var child;
+
+		/* Sends me a message every time Uglee reboots */
+		child = exec("t set active GilimYurhig", function(error, stdout, stderr) {
 			if (error !== null) {
 				console.log('exec error: ' + error);
 			}
+
+			child = exec("t update 'd @mikewills This is " + botName + ", I rebooted for you!'", function(error, stdout, stderr) {
+				if (error !== null) {
+					console.log('exec error: ' + error);
+				}
+			});
 		});
-	});
 	} catch (e) {
 		Log("*** ERROR *** " + e);
 	}
@@ -48,31 +48,31 @@ global.OnReady = function(data) {
 global.OnRoomChanged = function(data) {
 
 	try {
-	Log("Room Changed");
+		Log("Room Changed");
 
-	bot.modifyName(botName);
+		bot.modifyName(botName);
 
-	// Register all of the users in the room.
-	RegisterUsers(data.users);
-	UpdateDjs();
-	CheckAutoDj();
+		// Register all of the users in the room.
+		RegisterUsers(data.users);
+		UpdateDjs();
+		CheckAutoDj();
 
-	activeDj = data.room.metadata.current_dj;
-	Log(activeDj);
+		activeDj = data.room.metadata.current_dj;
+		Log(activeDj);
 
-	/* Check if the queue should be enabled. */
-	EnableQueue();
+		/* Check if the queue should be enabled. */
+		EnableQueue();
 
-	//Adds all active users to the users table - updates lastseen if we've seen
-	//them before, adds a new entry if they're new or have changed their username
-	//since the last time we've seen them
-	if (useDB) {
-		for (var i in data.users) {
-			if (data.users[i].name !== null) {
-				client.query('INSERT INTO ' + dbName + '.' + dbTablePrefix + 'USER (userid, username, lastseen)' + 'VALUES (?, ?, NOW()) ON DUPLICATE KEY UPDATE lastseen = NOW()', [data.users[i].userid, data.users[i].name]);
+		//Adds all active users to the users table - updates lastseen if we've seen
+		//them before, adds a new entry if they're new or have changed their username
+		//since the last time we've seen them
+		if (useDB) {
+			for (var i in data.users) {
+				if (data.users[i].name !== null) {
+					client.query('INSERT INTO ' + dbName + '.' + dbTablePrefix + 'USER (userid, username, lastseen)' + 'VALUES (?, ?, NOW()) ON DUPLICATE KEY UPDATE lastseen = NOW()', [data.users[i].userid, data.users[i].name]);
+				}
 			}
 		}
-	}
 	} catch (e) {
 		Log("*** ERROR *** " + e);
 	}
@@ -86,23 +86,23 @@ global.OnRegistered = function(data) {
 
 	try {
 
-	if (data.user.length === 0) return;
-	for (var i = 0; i < data.user.length; ++i) { /* Add to the cached user list */
-		allUsers[data.user[i].userid] = BaseUser().extend(data.user[i]);
-		++allUsers.length; /* Give new users a welcome message */
-		var text = msgWelcome.replace(/\{username\}/gi, data.user[i].name);
-		TellUser(data.user[i].userid, text);
-	}
-
-	//Add user to user table
-	if (currentsong !== null) {
-		currentsong.listeners++;
-	}
-	if (useDB) {
-		if (data.user[0].name !== null) {
-			client.query('INSERT INTO ' + dbName + '.' + dbTablePrefix + 'USER (userid, username, lastseen)' + 'VALUES (?, ?, NOW()) ON DUPLICATE KEY UPDATE lastseen = NOW()', [data.user[0].userid, data.user[0].name]);
+		if (data.user.length === 0) return;
+		for (var i = 0; i < data.user.length; ++i) { /* Add to the cached user list */
+			allUsers[data.user[i].userid] = BaseUser().extend(data.user[i]);
+			++allUsers.length; /* Give new users a welcome message */
+			var text = msgWelcome.replace(/\{username\}/gi, data.user[i].name);
+			TellUser(data.user[i].userid, text);
 		}
-	}
+
+		//Add user to user table
+		if (currentsong !== null) {
+			currentsong.listeners++;
+		}
+		if (useDB) {
+			if (data.user[0].name !== null) {
+				client.query('INSERT INTO ' + dbName + '.' + dbTablePrefix + 'USER (userid, username, lastseen)' + 'VALUES (?, ?, NOW()) ON DUPLICATE KEY UPDATE lastseen = NOW()', [data.user[0].userid, data.user[0].name]);
+			}
+		}
 	} catch (e) {
 		Log("*** ERROR *** " + e);
 	}
@@ -116,23 +116,23 @@ global.OnDeregistered = function(data) {
 
 	try {
 
-	/* Remove the user from the cache */
-	if (data.user.length !== 0) {
-		for (var i = 0, len = data.user.length; i < len; ++i) {
-			try {
-				allUsers[data.user[i].userid].Remove();
-			} catch (e) {
-				Log("Deregister Error");
-				Log(e);
-				Log(i);
-				Log(data);
-				Log(allUsers);
+		/* Remove the user from the cache */
+		if (data.user.length !== 0) {
+			for (var i = 0, len = data.user.length; i < len; ++i) {
+				try {
+					allUsers[data.user[i].userid].Remove();
+				} catch (e) {
+					Log("Deregister Error");
+					Log(e);
+					Log(i);
+					Log(data);
+					Log(allUsers);
+				}
 			}
 		}
-	}
 
-	/* Remove the user from the Queue if they were on it. */
-	/* RemoveFromQueue(data.user[0].userid); */
+		/* Remove the user from the Queue if they were on it. */
+		/* RemoveFromQueue(data.user[0].userid); */
 	} catch (e) {
 		Log("*** ERROR *** " + e);
 	}
@@ -155,12 +155,12 @@ global.OnAddDJ = function(data) {
 	Log("Add DJ");
 
 	try {
-	UpdateDjs();
+		UpdateDjs();
 
-	CheckAutoDj();
+		CheckAutoDj();
 
-	/* Check if they are from the queue if there is one */
-	NewDjFromQueue(data);
+		/* Check if they are from the queue if there is one */
+		NewDjFromQueue(data);
 	} catch (e) {
 		Log("*** ERROR *** " + e);
 	}
@@ -174,19 +174,19 @@ global.OnRemDJ = function(data) {
 
 	try {
 
-	/*if (!IsBot(data.user[0].userid)) {
+		/*if (!IsBot(data.user[0].userid)) {
 		StepDown();
 	} */
 
-	allUsers[data.user[0].userid].songCount = 0;
-	allUsers[data.user[0].userid].afkCount = 0;
+		allUsers[data.user[0].userid].songCount = 0;
+		allUsers[data.user[0].userid].afkCount = 0;
 
-	UpdateDjs();
+		UpdateDjs();
 
-	CheckAutoDj();
+		CheckAutoDj();
 
-	/* Notify the next DJ on the list */
-	NextDjOnQueue();
+		/* Notify the next DJ on the list */
+		NextDjOnQueue();
 	} catch (e) {
 		Log("*** ERROR *** " + e);
 	}
@@ -200,36 +200,36 @@ global.OnNewSong = function(data) {
 
 	try {
 
-	//Populate new song data in currentsong
-	PopulateSongData(data);
-	Log("Old DJ: " + activeDj);
+		//Populate new song data in currentsong
+		PopulateSongData(data);
+		Log("Old DJ: " + activeDj);
 
-	/* Check if the Dj has played their set */
-	if (activeDj !== null) {
-		CheckIfDjShouldBeRemoved(activeDj);
-	}
+		/* Check if the Dj has played their set */
+		if (activeDj !== null) {
+			CheckIfDjShouldBeRemoved(activeDj);
+		}
 
-	activeDj = data.room.metadata.current_dj;
-	Log("New DJ: " + activeDj);
+		activeDj = data.room.metadata.current_dj;
+		Log("New DJ: " + activeDj);
 
-	if (IsBot(activeDj)) {
-		botIsPlayingSong = true;
-		Log("Bot DJing");
-	}
+		if (IsBot(activeDj)) {
+			botIsPlayingSong = true;
+			Log("Bot DJing");
+		}
 
-	/* Update the play count if active */
-	if (djMaxPlays !== 0) {
-		allUsers[activeDj].Increment_SongCount();
-		SpeakPlayCount();
-	}
+		/* Update the play count if active */
+		if (djMaxPlays !== 0) {
+			allUsers[activeDj].Increment_SongCount();
+			SpeakPlayCount();
+		}
 
-	/* Check if queue status needs updating and update max plays */
-	EnableQueue();
+		/* Check if queue status needs updating and update max plays */
+		EnableQueue();
 
-	/* If the bot is on the table, vote up the song */
-	if (botOnTable) {
-		AwesomeSong();
-	}
+		/* If the bot is on the table, vote up the song */
+		if (botOnTable) {
+			AwesomeSong();
+		}
 	} catch (e) {
 		Log("*** ERROR *** " + e);
 	}
@@ -243,18 +243,18 @@ global.OnEndSong = function(data) {
 
 
 	try {
-	//Log song in DB
-	if (useDB) {
-		AddSongToDb();
-	}
+		//Log song in DB
+		if (useDB) {
+			AddSongToDb();
+		}
 
-	if (IsBot(data.room.metadata.current_dj)) {
-		botIsPlayingSong = false;
-		VoteNextSong();
-	}
+		if (IsBot(data.room.metadata.current_dj)) {
+			botIsPlayingSong = false;
+			VoteNextSong();
+		}
 
-	/* Reset bot details */
-	botVoted = false;
+		/* Reset bot details */
+		botVoted = false;
 	} catch (e) {
 		Log("*** ERROR *** " + e);
 	}
@@ -270,38 +270,38 @@ global.OnSnagged = function(data) {};
 /* ============== */
 global.OnUpdateVotes = function(data) {
 	try {
-	//Update vote and listener count
-	currentsong.up = data.room.metadata.upvotes;
-	currentsong.down = data.room.metadata.downvotes;
-	currentsong.listeners = data.room.metadata.listeners;
+		//Update vote and listener count
+		currentsong.up = data.room.metadata.upvotes;
+		currentsong.down = data.room.metadata.downvotes;
+		currentsong.listeners = data.room.metadata.listeners;
 
-	/* Track if a DJ voted this song */
-	for (var i = 0; i < data.room.metadata.votelog.length; i++) {
-		if (IsDj(data.room.metadata.votelog[i][0]) && data.room.metadata.votelog[i][1] == 'up') {
-			votedDjs.push(data.room.metadata.votelog[i][0]);
-		}
-	}
-
-	/* If autobop is enabled, determine if the bot should autobop or not based on votes */
-	if (useAutoBop) {
-		var percentAwesome = 0;
-		var percentLame = 0;
-
-		if (data.room.metadata.upvotes !== 0) {
-			percentAwesome = (data.room.metadata.upvotes / data.room.metadata.listeners) * 100;
-		}
-		if (data.room.metadata.downvotes !== 0) {
-			percentLame = (data.room.metadata.downvotes / data.room.metadata.listeners) * 100;
+		/* Track if a DJ voted this song */
+		for (var i = 0; i < data.room.metadata.votelog.length; i++) {
+			if (IsDj(data.room.metadata.votelog[i][0]) && data.room.metadata.votelog[i][1] == 'up') {
+				votedDjs.push(data.room.metadata.votelog[i][0]);
+			}
 		}
 
-		if ((percentAwesome - percentLame) > 25) {
-			AwesomeSong();
-		}
+		/* If autobop is enabled, determine if the bot should autobop or not based on votes */
+		if (useAutoBop) {
+			var percentAwesome = 0;
+			var percentLame = 0;
 
-		if ((percentLame - percentAwesome) > 25) {
-			LameSong();
+			if (data.room.metadata.upvotes !== 0) {
+				percentAwesome = (data.room.metadata.upvotes / data.room.metadata.listeners) * 100;
+			}
+			if (data.room.metadata.downvotes !== 0) {
+				percentLame = (data.room.metadata.downvotes / data.room.metadata.listeners) * 100;
+			}
+
+			if ((percentAwesome - percentLame) > 25) {
+				AwesomeSong();
+			}
+
+			if ((percentLame - percentAwesome) > 25) {
+				LameSong();
+			}
 		}
-	}
 	} catch (e) {
 		Log("*** ERROR *** " + e);
 	}
@@ -343,77 +343,77 @@ global.OnPmmed = function(data) {
 /* ============== */
 global.Command = function(source, data) {
 	try {
-	var text = "";
-	var pm = false;
-	var speak = false; /* First break apart the comand */
-	var result = data.text.match(/^\!(.*?)( .*)?$/);
-	var requestedUser = "";
-	var requestedUserName = "";
+		var text = "";
+		var pm = false;
+		var speak = false; /* First break apart the comand */
+		var result = data.text.match(/^\!(.*?)( .*)?$/);
+		var requestedUser = "";
+		var requestedUserName = "";
 
-	if (source == "speak") {
-		speak = true;
-		requestedUser = data.userid;
-		requestedUserName = data.name;
-	}
-	if (source == "pm") {
-		pm = true;
-		requestedUser = data.senderid;
-		//requestedUserName = allUsers[requestedUser].name;
-	}
-
-	if (result) {
-		var command = result[1].trim().toLowerCase();
-		var param = '';
-
-		if (result.length == 3 && result[2]) {
-			param = result[2].trim().toLowerCase();
+		if (source == "speak") {
+			speak = true;
+			requestedUser = data.userid;
+			requestedUserName = data.name;
+		}
+		if (source == "pm") {
+			pm = true;
+			requestedUser = data.senderid;
+			//requestedUserName = allUsers[requestedUser].name;
 		}
 
-		Log("Command: " + command + " | Param: " + param);
+		if (result) {
+			var command = result[1].trim().toLowerCase();
+			var param = '';
 
-		if (command == "q+") {
-			AddToQueue(data);
-		} else if (command == "q-") {
-			RemoveFromQueue(data.userid);
-		} else if (command == "q" || command == "wait") {
-			QueueStatus();
-		} else if (command == "rules") {
-			text = msgRules.replace(/\{username\}/gi, requestedUserName);
-			TellUser(requestedUser, text);
-		} else if (command == "info") {
-			text = msgInfo.replace(/\{username\}/gi, requestedUserName);
-			TellUser(requestedUser, text);
-		} else if (command == "qrules") {
-			text = msgQueueRules.replace(/\{username\}/gi, requestedUserName);
-			TellUser(requestedUser, text);
-		} else if (command == "help") {
-			text = msgHelp.replace(/\{username\}/gi, requestedUserName);
-			TellUser(requestedUser, text);
-			if (IsMod(requestedUser)) {
-				Pause(250);
-				text = msgModHelp.replace(/\{username\}/gi, requestedUserName);
+			if (result.length == 3 && result[2]) {
+				param = result[2].trim().toLowerCase();
+			}
+
+			Log("Command: " + command + " | Param: " + param);
+
+			if (command == "q+") {
+				AddToQueue(data);
+			} else if (command == "q-") {
+				RemoveFromQueue(data.userid);
+			} else if (command == "q" || command == "wait") {
+				QueueStatus();
+			} else if (command == "rules") {
+				text = msgRules.replace(/\{username\}/gi, requestedUserName);
 				TellUser(requestedUser, text);
+			} else if (command == "info") {
+				text = msgInfo.replace(/\{username\}/gi, requestedUserName);
+				TellUser(requestedUser, text);
+			} else if (command == "qrules") {
+				text = msgQueueRules.replace(/\{username\}/gi, requestedUserName);
+				TellUser(requestedUser, text);
+			} else if (command == "help") {
+				text = msgHelp.replace(/\{username\}/gi, requestedUserName);
+				TellUser(requestedUser, text);
+				if (IsMod(requestedUser)) {
+					Pause(250);
+					text = msgModHelp.replace(/\{username\}/gi, requestedUserName);
+					TellUser(requestedUser, text);
+				}
+			} else if (command == "whois" || command == "about") {
+				Speak(msgAbout);
+			} else if (command == "count") {
+				SpeakPlayCount();
+			} else if (command == "issue" || command == "bug" || command == "feature" || command == "idea") {
+				TellUser(requestedUser, msgBugs);
+			} else if (command == "1ndone" || command == "1anddone") {
+				djMaxPlays = maxPlays;
+				Speak(msgOneAndDone);
+			} else if (command == "resetmaxplays" || command == "reset") {
+				djMaxPlays = djMaxPlays;
+				Speak("We have reset to max plays of " + maxPlays);
+			} else if (command == "goplay") {
+				if (IsMod(requestedUser)) {
+					GoPlay();
+				}
 			}
-		} else if (command == "whois" || command == "about") {
-			Speak(msgAbout);
-		} else if (command == "count") {
-			SpeakPlayCount();
-		} else if (command == "issue" || command == "bug" || command == "feature" || command == "idea") {
-			TellUser(requestedUser, msgBugs);
-		} else if (command == "1ndone" || command == "1anddone") {
-			djMaxPlays = maxPlays;
-			Speak(msgOneAndDone);
-		} else if (command == "resetmaxplays" || command == "reset") {
-			djMaxPlays = djMaxPlays;
-			Speak("We have reset to max plays of " + maxPlays);
-		} else if (command == "goplay") {
-			if (IsMod(requestedUser)) {
-				GoPlay();
-			}
-		}
 
-		/**** MODERATOR FUNCTIONS ****/
-		/*else if (command == "a" || command == "awesome") {
+			/**** MODERATOR FUNCTIONS ****/
+			/*else if (command == "a" || command == "awesome") {
 			if (IsMod(data.userid)) {
 				AwesomeSong();
 			}
@@ -422,94 +422,94 @@ global.Command = function(source, data) {
 				LameSong();
 			}
 		}*/
-		else if (command == "votenext") {
-			if (IsMod(requestedUser)) {
-				VoteNextSong();
-			}
-		} else if (command == "realcount") {
-			if (IsMod(requestedUser)) {
-				if (param === "") {
-					TellUser(requestedUser, "Usage: !realcount x-x-x-x-x");
-				} else {
-					SetRealCount(param);
+			else if (command == "votenext") {
+				if (IsMod(requestedUser)) {
+					VoteNextSong();
 				}
-			}
-		} else if (command == "skip") {
-			if (IsMod(requestedUser)) {
-				bot.skip();
-			}
-		} else if (command == "autodj" && pm) {
-			if (IsMod(requestedUser)) {
-				if (param == "true" || param == "false") {
-					useAutoDj = param;
-					TellUser(requestedUser, "Auto DJ set to " + useAutoDj);
-				} else {
-					TellUser(requestedUser, "Usage: !autodj true or false. Currently it is set to " + useAutoDj);
+			} else if (command == "realcount") {
+				if (IsMod(requestedUser)) {
+					if (param === "") {
+						TellUser(requestedUser, "Usage: !realcount x-x-x-x-x");
+					} else {
+						SetRealCount(param);
+					}
 				}
-			}
-		} else if (command == "autobop" && pm) {
-			if (IsMod(requestedUser)) {
-				if (param == "true" || param == "false") {
-					useAutoBop = param;
-					TellUser(requestedUser, "Auto bop set to " + useAutoBop);
-				} else {
-					TellUser(requestedUser, "Usage: !autobop true or false. Currently it is set to " + useAutoBop);
+			} else if (command == "skip") {
+				if (IsMod(requestedUser)) {
+					bot.skip();
 				}
-			}
-		} else if (command == "consolelog" && pm) {
-			if (IsMod(requestedUser)) {
-				if (param == "true" || param == "false") {
-					logtoconsole = param;
-					TellUser(requestedUser, "Auto DJ set to " + logtoconsole);
-				} else {
-					TellUser(requestedUser, "Usage: !consolelog true or false. Currently it is set to " + logtoconsole);
+			} else if (command == "autodj" && pm) {
+				if (IsMod(requestedUser)) {
+					if (param == "true" || param == "false") {
+						useAutoDj = param;
+						TellUser(requestedUser, "Auto DJ set to " + useAutoDj);
+					} else {
+						TellUser(requestedUser, "Usage: !autodj true or false. Currently it is set to " + useAutoDj);
+					}
 				}
-			}
-		} else if (command == "setlaptop" && pm) {
-			if (IsMod(requestedUser)) {
-				if (param === "") {
-					TellUser(requestedUser, "Usage: !setlaptop xxxxx");
-				} else {
-					bot.modifyLaptop(param);
+			} else if (command == "autobop" && pm) {
+				if (IsMod(requestedUser)) {
+					if (param == "true" || param == "false") {
+						useAutoBop = param;
+						TellUser(requestedUser, "Auto bop set to " + useAutoBop);
+					} else {
+						TellUser(requestedUser, "Usage: !autobop true or false. Currently it is set to " + useAutoBop);
+					}
 				}
-			}
-		} else if (command == "setavatar" && pm) {
-			if (IsMod(requestedUser)) {
-				if (param === "") {
-					TellUser(requestedUser, "Usage: !setavatar #");
-				} else {
-					bot.setAvatar(param);
+			} else if (command == "consolelog" && pm) {
+				if (IsMod(requestedUser)) {
+					if (param == "true" || param == "false") {
+						logtoconsole = param;
+						TellUser(requestedUser, "Auto DJ set to " + logtoconsole);
+					} else {
+						TellUser(requestedUser, "Usage: !consolelog true or false. Currently it is set to " + logtoconsole);
+					}
 				}
+			} else if (command == "setlaptop" && pm) {
+				if (IsMod(requestedUser)) {
+					if (param === "") {
+						TellUser(requestedUser, "Usage: !setlaptop xxxxx");
+					} else {
+						bot.modifyLaptop(param);
+					}
+				}
+			} else if (command == "setavatar" && pm) {
+				if (IsMod(requestedUser)) {
+					if (param === "") {
+						TellUser(requestedUser, "Usage: !setavatar #");
+					} else {
+						bot.setAvatar(param);
+					}
+				}
+			} else if (command == "kill" && pm) {
+				if (IsMod(requestedUser)) {
+					bot.roomDeregister();
+					process.exit(0);
+				}
+			} else if (command == "addsong") {
+				AddSong(requestedUser);
 			}
-		} else if (command == "kill" && pm) {
-			if (IsMod(requestedUser)) {
-				bot.roomDeregister();
-				process.exit(0);
+			if (useDB) {
+				require("./stats.js");
+				var response = RunStats(command, param, data, function(response) {
+					if (response !== null) {
+						Speak(response);
+					}
+				});
 			}
-		} else if (command == "addsong") {
-			AddSong(requestedUser);
 		}
-		if (useDB) {
-			require("./stats.js");
-			var response = RunStats(command, param, data, function(response) {
-				if (response !== null) {
-					Speak(response);
-				}
-			});
+
+		/* Catch all for the morons that can't read. */
+		if (data.text == "q+" || data.text == "addme" || data.text.match(/^\/addme$/) || data.text.match(/^\/a$/) || data.text.match(/^\!a$/) || data.text.match(/^\/q$/)) {
+			Log("Add to Queue via wrong command: " + data.text);
+			AddToQueue(data);
+			Speak("Please next time use the offical command: !q+");
 		}
-	}
 
-	/* Catch all for the morons that can't read. */
-	if (data.text == "q+" || data.text == "addme" || data.text.match(/^\/addme$/) || data.text.match(/^\/a$/) || data.text.match(/^\!a$/) || data.text.match(/^\/q$/)) {
-		Log("Add to Queue via wrong command: " + data.text);
-		AddToQueue(data);
-		Speak("Please next time use the offical command: !q+");
-	}
-
-	/* Used for voting */
-	if (data.text == "1" || data.text == "2" || data.text == "3" || data.text == "4" || data.text == "5") {
-		ProcessVote(data.text);
-	}
+		/* Used for voting */
+		if (data.text == "1" || data.text == "2" || data.text == "3" || data.text == "4" || data.text == "5") {
+			ProcessVote(data.text);
+		}
 	} catch (e) {
 		Log("*** ERROR *** " + e);
 	}
@@ -971,7 +971,10 @@ global.PopulateSongData = function(data) {
 };
 
 var GoPlay = function() {
-		child = exec("cd /home/mikewills/", function(error, stdout, stderr) {
+
+		var sys = require('util');
+		var exec = require('child_process').exec;
+		var child = exec("cd /home/mikewills/", function(error, stdout, stderr) {
 			if (error !== null) {
 				console.log('exec error: ' + error);
 			}
