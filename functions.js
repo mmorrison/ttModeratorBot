@@ -86,6 +86,11 @@ global.OnRegistered = function(data) {
 
 	try {
 
+		// Banned users
+		if (data.user[0].userid == '4e0d05624fe7d076b218ac5b'){
+			bot.bootUser(data.user[0].userid, "You have been banned from the room.");
+		}
+
 		if (data.user.length === 0) return;
 		for (var i = 0; i < data.user.length; ++i) { /* Add to the cached user list */
 			allUsers[data.user[i].userid] = BaseUser().extend(data.user[i]);
